@@ -1,93 +1,76 @@
+-- Creacion de TABLAS
+
 CREATE TABLE USUARIOS (
-    userId int IDENTITY(1, 1) NOT NULL,
+    id_usuario int IDENTITY(1, 1) NOT NULL,
     username varchar(255) NOT NULL,
     password varchar(255) NOT NULL,
     refreshtoken varchar(255) NULL,
     role CHAR (10) NOT NULL,
-    PRIMARY KEY(userId)
-);
-
-CREATE TABLE OPE_MANAGERS (
-    IDMANAGER int NOT NULL,
-    NOMBRE varchar(255) NULL,
-    ACTIVO int NULL,
-    PRIMARY KEY (IDMANAGER),
-    FOREIGN KEY (IDMANAGER) REFERENCES USUARIOS(userId)
+    PRIMARY KEY(id_usuario)
 )
 
-CREATE TABLE OPE_RECOLECTORES (
-    IDRECOLECTOR int NOT NULL,
-    NOMBRE varchar(300) NULL,
-    ID_ZONA int NULL,
-    ID_TI_PORECOLECTOR INT NULL,
-    IDZONA2 int NULL,
-    ACTIVO int NULL,
-    INDICE int NULL,
-    PRIMARY KEY (IDRECOLECTOR),
-    FOREIGN KEY (IDRECOLECTOR) REFERENCES USUARIOS(userId)
+CREATE TABLE MANAGERS (
+    id_manager int NOT NULL,
+    nombre varchar(255) NULL,
+    activo int NULL,
+    PRIMARY KEY (id_manager),
+    FOREIGN KEY (id_manager) REFERENCES USUARIOS(id_usuario)
 )
 
-
-CREATE TABLE OPE_DONANTES (
-    ID_DONANTE INT IDENTITY(1, 1) NOT NULL,
-    A_PATERNO varchar(100) NOT NULL,
-    A_MATERNO varchar(100) NULL,
-    NOMBRE varchar(100) NOT NULL,
-    FECHA_NAC date NULL,
-    EMAIL varchar(50) NOT NULL,
-    TEL_CASA INT NULL,
-    TEL_OFICINA INT NULL,
-    TEL_MOVIL INT NULL,
-    ULTIMO_DONATIVO INT NULL,
-    ID_GENERO INT NULL,
-    PRIMARY KEY(ID_DONANTE)
+CREATE TABLE RECOLECTORES (
+    id_recolector int NOT NULL,
+    nombre varchar(300) NULL,
+    id_zona int NULL,
+    activo int NULL,
+    PRIMARY KEY (id_recolector),
+    FOREIGN KEY (id_recolector) REFERENCES USUARIOS(id_usuario)
 )
 
-CREATE TABLE COP_DONATIVOS_DONANTE (
-    ID_DONATIVO INT IDENTITY(1, 1) NOT NULL,
-    ID_DONANTE INT NOT NULL,
-    ID_FORMA_PAGO INT NOT NULL,
-    ID_FRECUENCIA INT NULL,
-    NUM_FRECUENCIA INT NULL,
-    ID_TIPO_FRECUENCIA INT NULL,
-    PAGO_UNICO bit NULL,
-    ID_ASIGNACION INT NULL,
-    ID_CAMPANA_FINANCIERA INT NULL,
-    ID_CATEGORIA INT NULL,
-    IMPORTE float NULL,
-    UID varchar(50) NULL,
-    ID_ESTATUS INT NULL,
-    PRIMARY KEY(ID_DONATIVO),
-    FOREIGN KEY(ID_DONANTE) REFERENCES OPE_DONANTES(ID_DONANTE)   
+CREATE TABLE DONANTES (
+    id_donante int IDENTITY(1, 1) NOT NULL,
+    a_paterno varchar(100) NOT NULL,
+    a_materno varchar(100) NULL,
+    nombre varchar(100) NOT NULL,
+    email varchar(50) NOT NULL,
+  	direccion varchar (100) NOT NULL,
+    tel_casa int NULL,
+    tel_movil int NULL,
+    ultimo_donativo int NULL,
+    id_genero int NULL,
+    PRIMARY KEY(id_donante)
 )
-  
-CREATE TABLE OPE_BITACORA_PAGOS_DONATIVOS (
-    ID_BITACORA INT IDENTITY(1, 1) NOT NULL,
-    ID_DONATIVO INT NOT NULL,
-    ID_NUM_PAGO INT NULL,
-    ID_RECOLECTOR INT NULL,
-    FECHA_COBRO date NULL,
-    FECHA_PAGO date NULL,
-    FECHA_VISITA date NULL,
-    ID_FORMA_PAGO INT NULL,
-    IMPORTE float NULL,
-    ID_RECIBO varchar(50) NULL,
-    ESTATUS_PAGO_TMP INT NULL,
-    ESTATUS_PAGO INT NULL,
-    COMENTARIOS varchar(MAX) NULL,
-    ID_DIRECCION_COBRO INT NULL,
-    USUARIO_CONFIRMACION varchar(50) NULL,
-    FECHA_CONFIRMACION datetime NULL,
-    USUARIO_CANCELACION varchar(50) NULL,
-    USUARIO_PAGADO_INGRESOS varchar(50) NULL,
-    FECHA_STATUS_PAGADO datetime NULL,
-    FECHA_REPROGRAMACION datetime NULL,
-    REPROGRAMACION_TELEFONISTA INT NULL DEFAULT ((0)),
-    PRIMARY KEY(ID_BITACORA),
-    FOREIGN KEY(ID_DONATIVO) REFERENCES COP_DONATIVOS_DONANTE(ID_DONATIVO),
-    FOREIGN KEY(ID_RECOLECTOR) REFERENCES OPE_RECOLECTORES(IDRECOLECTOR)
-  )
-  
+
+CREATE TABLE DONATIVOS(
+    id_donativo int IDENTITY(1, 1) NOT NULL,
+    id_donante int NOT NULL,
+    importe float NULL,
+    id_estatus int NULL,
+    PRIMARY KEY(id_donativo),
+    FOREIGN KEY(id_donante) REFERENCES DONANTES(id_donante)
+)
+
+CREATE TABLE BITACORA(
+    id_bitacora int IDENTITY(1, 1) NOT NULL,
+    id_donativo int NOT NULL,
+    id_num_pago int NULL,
+    id_recolector int NULL,
+    fecha_cobro date NULL,
+    fecha_pago date NULL,
+    fecha_visita date NULL,
+    id_recibo varchar(50) NULL,
+    estatus_pago int NULL,
+    comentarios varchar(max) NULL,
+    fecha_confirmacion datetime NULL,
+    fecha_status_pagado datetime NULL,
+    fecha_reprogramacion datetime NULL,
+    reprogramacion_telefonista int NULL DEFAULT ((0)),
+    PRIMARY KEY(id_bitacora),
+    FOREIGN KEY(id_donativo) REFERENCES DONATIVOS(id_donativo),
+    FOREIGN KEY(id_recolector) REFERENCES RECOLECTORES(id_recolector)
+)
+
+-- INSERTS
+
  -- USUARIOS
 INSERT INTO USUARIOS (username, password, refreshtoken, role)
 VALUES ('user1', '$2a$12$DsRB5Urc3dEGs3591XcEFes54zm9Jbi3PZz6fYaNTn3z2onG5lbe6', NULL, 'manager');
@@ -95,38 +78,36 @@ VALUES ('user1', '$2a$12$DsRB5Urc3dEGs3591XcEFes54zm9Jbi3PZz6fYaNTn3z2onG5lbe6',
 INSERT INTO USUARIOS (username, password, refreshtoken, role)
 VALUES ('user2', '$2a$12$DsRB5Urc3dEGs3591XcEFes54zm9Jbi3PZz6fYaNTn3z2onG5lbe6', NULL, 'repartidor');
 
--- MANAGER
 
-INSERT INTO OPE_MANAGERS (IDMANAGER, NOMBRE, ACTIVO)
-VALUES (1, 'Manager 1', 1);
+-- MANAGER 
 
--- RECOLECTORES
+INSERT INTO MANAGERS (id_manager, nombre, activo)
+VALUES (1, 'Jose Placencia', 1);
 
-INSERT INTO OPE_RECOLECTORES (IDRECOLECTOR, NOMBRE, ID_ZONA, ID_TI_PORECOLECTOR, IDZONA2, ACTIVO, INDICE)
-VALUES (2, 'Recolector 2', 2, 2, 2, 1, 2);
+-- Repartidor
+INSERT INTO RECOLECTORES (id_recolector, nombre, id_zona, activo)
+VALUES (2, 'Ricardo Joseua', 2, 1);
 
+-- Donante
 
--- DONANTES
+INSERT INTO DONANTES (a_paterno, a_materno, nombre, email, direccion, tel_casa, tel_movil, ultimo_donativo, id_genero)
+VALUES ('Gómez', 'Hernández', 'Ana', 'ana@example.com', 'Calle 123, Ciudad', 12345678, 98765432, 100, 1);
 
-INSERT INTO OPE_DONANTES (A_PATERNO, A_MATERNO, NOMBRE, FECHA_NAC, EMAIL, TEL_CASA, TEL_OFICINA, TEL_MOVIL, ULTIMO_DONATIVO, ID_GENERO)
-VALUES ('Doe', 'Johnson', 'John', '1990-01-15', 'john@example.com', NULL, NULL, '55555555', 1, 1);
+INSERT INTO DONANTES (a_paterno, a_materno, nombre, email, direccion, tel_casa, tel_movil, ultimo_donativo, id_genero)
+VALUES ('López', 'Martínez', 'Carlos', 'carlos@example.com', 'Avenida 456, Pueblo', 98765432, 12345678, 200, 2);
 
-INSERT INTO OPE_DONANTES (A_PATERNO, A_MATERNO, NOMBRE, FECHA_NAC, EMAIL, TEL_CASA, TEL_OFICINA, TEL_MOVIL, ULTIMO_DONATIVO, ID_GENERO)
-VALUES ('Smith', 'Williams', 'Emily', '1985-05-20', 'emily@example.com', '55555555', NULL, '55512345', 2, 2);
+-- Donativo
 
--- OPE_DONTIVOS
+INSERT INTO DONATIVOS (id_donante, importe, id_estatus)
+VALUES (1, 50.00, 0);
 
-INSERT INTO COP_DONATIVOS_DONANTE (ID_DONANTE, ID_FORMA_PAGO, ID_FRECUENCIA, NUM_FRECUENCIA, ID_TIPO_FRECUENCIA, PAGO_UNICO, ID_ASIGNACION, ID_CAMPANA_FINANCIERA, ID_CATEGORIA, IMPORTE, UID, ID_ESTATUS)
-VALUES (9, 1, 1, NULL, NULL, 0, 1, 1, 1, 100.00, 'UID123', 1);
-
-INSERT INTO COP_DONATIVOS_DONANTE (ID_DONANTE, ID_FORMA_PAGO, ID_FRECUENCIA, NUM_FRECUENCIA, ID_TIPO_FRECUENCIA, PAGO_UNICO, ID_ASIGNACION, ID_CAMPANA_FINANCIERA, ID_CATEGORIA, IMPORTE, UID, ID_ESTATUS)
-VALUES (10, 2, 2, 3, 1, 1, 2, 2, 2, 50.00, 'UID456', 2);
+INSERT INTO DONATIVOS (id_donante, importe, id_estatus)
+VALUES (2, 75.00, 1);
 
 -- BITACORA
 
-INSERT INTO OPE_BITACORA_PAGOS_DONATIVOS (ID_DONATIVO, ID_NUM_PAGO, ID_RECOLECTOR, FECHA_COBRO, FECHA_PAGO, FECHA_VISITA, ID_FORMA_PAGO, IMPORTE, ID_RECIBO, ESTATUS_PAGO_TMP, ESTATUS_PAGO, COMENTARIOS, ID_DIRECCION_COBRO, USUARIO_CONFIRMACION, FECHA_CONFIRMACION, FECHA_STATUS_PAGADO, FECHA_REPROGRAMACION, REPROGRAMACION_TELEFONISTA)
-VALUES (4, 1, 2, '2023-09-06', '2023-09-06', '2023-09-06', 1, 100.00, 'REC123', 1, 2, 'Payment received', 1, 'admin', '2023-09-06 10:00:00', '2023-09-06 12:00:00', '2023-09-06 13:30:00', 0);
+INSERT INTO BITACORA (id_donativo, id_num_pago, id_recolector, fecha_cobro, fecha_pago, fecha_visita, id_recibo, estatus_pago, comentarios, fecha_confirmacion, fecha_status_pagado, fecha_reprogramacion, reprogramacion_telefonista)
+VALUES (1, 1, 2, '2023-09-06', '2023-09-07', '2023-09-08', 'REC001', 1, 'Comentario 1', '2023-09-09', '2023-09-10', '2023-09-11', 0);
 
-
-
-
+INSERT INTO BITACORA (id_donativo, id_num_pago, id_recolector, fecha_cobro, fecha_pago, fecha_visita, id_recibo, estatus_pago, comentarios, fecha_confirmacion, fecha_status_pagado, fecha_reprogramacion, reprogramacion_telefonista)
+VALUES (2, 2, 2, '2023-09-07', '2023-09-08', '2023-09-09', 'REC002', 2, 'Comentario 2', '2023-09-10', '2023-09-11', '2023-09-12', 0);
