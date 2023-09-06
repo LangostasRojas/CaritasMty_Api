@@ -2,7 +2,6 @@ import pymssql
 import bcrypt
 import jwt
 import datetime
-import time
 from dotenv import load_dotenv
 import os
 
@@ -41,7 +40,7 @@ def post_refresh_token(token, userId):
         # Reconnect to the database
         cnx = mssql_connect(mssql_params)
         cursor = cnx.cursor(as_dict=True)
-        cursor.execute(query, (token,))
+        cursor.execute(query, (token, userId))
         cnx.commit()  # Commit the changes to the database
         cursor.close()
     except Exception as e:
@@ -51,8 +50,6 @@ def post_refresh_token(token, userId):
 
 def sign_in(username, password):
     global cnx, mssql_params, ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY
-    username_value = username['username']
-    password_value = password['password']
     # Parametrized query (allows only strings)
     query = 'SELECT id_usuario, username, role, password FROM USUARIOS WHERE username = %s;'
 
@@ -60,19 +57,19 @@ def sign_in(username, password):
         try:
             cursor = cnx.cursor(as_dict=True)
             # Execute query using username as parameter
-            cursor.execute(query, (username_value))
+            cursor.execute(query, (username))
         except pymssql._pymssql.InterfaceError:
             print("La langosta se esta conectando...")
             cnx = mssql_connect(mssql_params)
             cursor = cnx.cursor(as_dict=True)
-            cursor.execute(query, (username_value))
+            cursor.execute(query, (username))
         
         result = cursor.fetchall()
         user_password = result[0]['password'].encode('utf-8')
         
         cursor.close()
 
-        if bcrypt.checkpw(password_value.encode('utf-8'),user_password):      
+        if bcrypt.checkpw(password.encode('utf-8'),user_password):      
             resultado = {
                             "userId": result[0]['id_usuario'], 
                             "userName": result[0]['username'], 
@@ -92,32 +89,88 @@ def sign_in(username, password):
 
         else:
             return {'error': 'Usuario o contraseña incorrectos'}, 401
-        
+    
     except Exception as e:
         return {'error': e}, 401
         # raise TypeError("Error al iniciar sesion: %s" % e)
 
 
-def get_recolector_tickets(user_id, jwt_payload):
-    global cnx, mssql_params, ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY
-    # query = """
-    #         SELECT * t.ID_NUM_PAGO, t.IMPORTE,
-    #         """
+def get_collector_tickets(user_id, jwt_payload):
+    global cnx, mssql_params
+    query = """
+            SELECT donativo.id_donativo AS idDonativo, donativo.importe, donante.nombre + ' ' + donante.a_paterno AS nombre, donante.direccion
+            FROM RECOLECTORES r
+            JOIN BITACORA b ON r.id_recolector = b.id_recolector
+            JOIN DONATIVOS donativo  ON donativo.id_donativo = b.id_donativo
+            JOIN DONANTES donante ON donante.id_donante = donativo.id_donante
+            WHERE r.id_recolector = %s AND donativo.id_estatus = 0 AND CONVERT(DATE, b.fecha_cobro) = CONVERT(DATE, GETDATE());
+            """
 
     try:
+        # Verificar que user_id sea un entero
+        try: user_id = int(user_id)
+        except Exception as e: return {'error': 'Usuario invalido'}, 406
+
+        # Verificar que no se este intentando acceder a tickets de otro recolector 
         if 'userId' in jwt_payload and jwt_payload['userId'] != int(user_id):
             return {'error': 'Acceso no autorizado'}, 401
+        
+        try:
+            cursor = cnx.cursor(as_dict=True)
+            cursor.execute(query, (user_id,))
+        except pymssql._pymssql.InterfaceError:
+            print("La langosta se esta conectando...")
+            cnx = mssql_connect(mssql_params)
+            cursor = cnx.cursor(as_dict=True)
+            cursor.execute(query, (user_id,))
 
-        return [
-            {'idTicket': 1234, 'importe': 100.00, 'direccion': 'Calle 1', 'nombre': 'Juan'},
-            {'idTicket': 1234, 'importe': 100.00, 'direccion': 'Calle 1', 'nombre': 'Juan'},
-            {'idTicket': 1234, 'importe': 100.00, 'direccion': 'Calle 1', 'nombre': 'Juan'},
-            ], 200
+        result = cursor.fetchall()
+        cursor.close()
+        
+        return result
 
     except Exception as e:
         return {'error': 'Ocurrio un error al obtener tickets de recolector'}
         # raise TypeError(f"Error al obtener tickets de recolector: {userId}. Error: {e}")
     
+
+def get_ticket_information(ticket_id, jwt_payload):
+    global cnx, mssql_params
+    query = """
+            SELECT r.id_recolector AS idRecolector, donativo.id_donativo AS idDonativo, donativo.importe, donante.nombre + ' ' + donante.a_paterno AS nombre, donante.direccion
+            FROM RECOLECTORES r
+            JOIN BITACORA b ON r.id_recolector = b.id_recolector
+            JOIN DONATIVOS donativo  ON donativo.id_donativo = b.id_donativo
+            JOIN DONANTES donante ON donante.id_donante = donativo.id_donante
+            WHERE donativo.id_donativo = %s;
+            """
+    
+    try:
+        # Verificar que ticket_id sea un entero
+        try: ticket_id = int(ticket_id)
+        except Exception as e: return {'error': 'Ticket no valido'}, 406
+
+        try:
+            cursor = cnx.cursor(as_dict=True)
+            cursor.execute(query, (ticket_id,))
+        except pymssql._pymssql.InterfaceError:
+            print("La langosta se esta conectando...")
+            cnx = mssql_connect(mssql_params)
+            cursor = cnx.cursor(as_dict=True)
+            cursor.execute(query, (ticket_id,))
+        
+        result = cursor.fetchall()
+        cursor.close()
+
+        if len(result) == 0:
+            return {'error': 'Ticket no encontrado'}, 404
+        if result[0]['idRecolector'] != jwt_payload['userId']:
+            return {'error': 'Acceso no autorizado'}, 401
+        
+        return result[0]
+        
+    except Exception as e:
+        return {'Error al obtener datos de ticket'}, 401
 
 
 if __name__ == '__main__':

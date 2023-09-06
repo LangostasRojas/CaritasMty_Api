@@ -1,5 +1,4 @@
-from flask import Flask, make_response, request, jsonify
-import json
+from flask import Flask, make_response, request
 import sys
 import mssql_functions as MSSql
 from dotenv import load_dotenv
@@ -17,7 +16,6 @@ mssql_params['DB_NAME'] = os.getenv('DB_NAME')
 mssql_params['DB_USER'] = os.getenv('DB_USER')
 mssql_params['DB_PASSWORD'] = os.getenv('DB_PASSWORD')
 ACCESS_TOKEN_KEY = os.getenv('ACCESS_TOKEN_KEY')
-REFRESH_TOKEN_KEY = os.getenv('REFRESH_TOKEN_KEY')
 
 try:
     MSSql.cnx = MSSql.mssql_connect(mssql_params)
@@ -28,7 +26,12 @@ except Exception as e:
 app = Flask(__name__)
 
 
-# MIddlweware
+# Excluir middleware
+def exclude_middleware(func):
+    func._exclude_middleware = True
+    return func
+
+# Middlweware
 @app.before_request
 def verify_jwt():
     # No verificar token de acceso si el endpoint esta excluido
@@ -44,7 +47,7 @@ def verify_jwt():
     auth_header = request.headers.get('Authorization')
     
     if not auth_header:
-        return make_response(jsonify({'error': 'No se proporciono token de acceso'}), 401)
+        return make_response({'error': 'No se proporciono token de acceso'}, 401)
     
     # Extraer token de acceso sin el prefijo 'Bearer '
     access_token = auth_header.replace('Bearer ', '')
@@ -62,15 +65,11 @@ def verify_jwt():
     except jwt.DecodeError:
         return {'error': 'Token de acceso invalido'}, 401
     except Exception as e:
-        raise TypeError("Error al verificar token de acceso: %s" % e)
-
-
-def exclude_middleware(func):
-    func._exclude_middleware = True
-    return func
+        raise TypeError("Error al verificar token de acceso")
 
 
 @app.route("/hello")
+@exclude_middleware
 def hello():
     return "Las langostas rojas de Xalapa te saludan de vuelta!\n"
 
@@ -79,8 +78,8 @@ def hello():
 @exclude_middleware
 def sign_in():
     req = request.json
-    username = {'username': req['username']}
-    password = {'password': req['password']}
+    username = req['username']
+    password = req['password']
 
     response = MSSql.sign_in(username, password)
 
@@ -91,16 +90,16 @@ def sign_in():
 def get_recolector_tickets():
     userId = request.args.get('userId')
 
-    response = MSSql.get_recolector_tickets(userId, request.userJWT)
+    response = MSSql.get_collector_tickets(userId, request.userJWT)
 
     return make_response(response)
 
 
-@app.route("/get-ticket", methods=['GET'])
-def get_recolector_tickets():
+@app.route("/get-ticket-information", methods=['GET'])
+def get_ticket_information():
     ticketId = request.args.get('ticketId')
 
-    response = MSSql.get_ticket_information(userId, request.userJWT)
+    response = MSSql.get_ticket_information(ticketId, request.userJWT)
 
     return make_response(response)
 
