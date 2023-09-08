@@ -88,18 +88,28 @@ def sign_in():
 
 @app.route("/get-recolector-tickets", methods=['GET'])
 def get_recolector_tickets():
-    userId = request.args.get('userId')
+    user_id = request.args.get('userId')
 
-    response = MSSql.get_collector_tickets(userId, request.userJWT)
+    response = MSSql.get_collector_tickets(user_id, request.userJWT)
 
     return make_response(response)
 
 
 @app.route("/get-ticket-information", methods=['GET'])
 def get_ticket_information():
-    ticketId = request.args.get('ticketId')
+    ticket_id = request.args.get('ticketId')
 
-    response = MSSql.get_ticket_information(ticketId, request.userJWT)
+    response = MSSql.get_ticket_information(ticket_id, request.userJWT)
+
+    return make_response(response)
+
+
+@app.route("/marcar-completado", methods=['POST'])
+def complete_ticket():
+    req = request.json
+    ticket_id = req['ticketId']
+
+    response = MSSql.complete_ticket(ticket_id, request.userJWT)
 
     return make_response(response)
 

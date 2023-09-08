@@ -142,7 +142,7 @@ def get_ticket_information(ticket_id, jwt_payload):
             JOIN BITACORA b ON r.id_recolector = b.id_recolector
             JOIN DONATIVOS donativo  ON donativo.id_donativo = b.id_donativo
             JOIN DONANTES donante ON donante.id_donante = donativo.id_donante
-            WHERE donativo.id_donativo = %s;
+            WHERE r.id_recolector = %s;
             """
     
     try:
@@ -171,6 +171,81 @@ def get_ticket_information(ticket_id, jwt_payload):
         
     except Exception as e:
         return {'Error al obtener datos de ticket'}, 401
+
+
+def complete_ticket(ticket_id, jwt_payload):    
+    try:
+        # Verificar que ticket_id sea un entero
+        try: ticket_id = int(ticket_id)
+        except Exception as e: return {'error': 'Ticket no valido'}, 406
+
+        def get_recolector_id(ticket_id):
+            global cnx, mssql_params
+            query_get_id = """
+                        SELECT r.id_recolector AS idRecolector, donativo.id_donativo AS idDonativo
+                        FROM RECOLECTORES r
+                        JOIN BITACORA b ON r.id_recolector = b.id_recolector
+                        JOIN DONATIVOS donativo  ON donativo.id_donativo = b.id_donativo
+                        WHERE donativo.id_donativo = %s;
+                        """
+
+            # Obtener datos para ver si es dueño del ticket
+            try:
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query_get_id, (ticket_id,))
+            except pymssql._pymssql.InterfaceError:
+                print("La langosta se esta conectando...")
+                cnx = mssql_connect(mssql_params)
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query_get_id, (ticket_id,))
+            
+            result = cursor.fetchall()
+            cursor.close()
+            return result
+        
+        try:
+            result = get_recolector_id(ticket_id)
+        except Exception as e:
+            raise TypeError("Error al actualizar ticket: %s" % e)
+
+        # Verificar si el ticket existe
+        if len(result) == 0:
+            return {'error': 'Ticket no encontrado'}, 404
+        # Verificar que el recolector sea dueño del ticket
+        if result[0]['idRecolector'] != jwt_payload['userId']:
+            return {'error': 'Acceso no autorizado'}, 401
+        
+        
+        def update_ticket(ticket_id):
+            global cnx, mssql_params
+            query_update = """
+                        UPDATE DONATIVOS
+                        SET id_estatus = 1
+                        WHERE id_donativo = %s
+                        """
+
+            # Actualizar ticket a completado (recolectado)
+            try:
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query_update, (ticket_id,))
+                cnx.commit()  # Commit the changes to the database
+                cursor.close()
+            except pymssql._pymssql.InterfaceError:
+                print("La langosta se esta conectando...")
+                cnx = mssql_connect(mssql_params)
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query_update, (ticket_id,))
+                cnx.commit()  # Commit the changes to the database
+                cursor.close()
+        try:
+            update_ticket(ticket_id)
+        except Exception as e:
+            return {'error': 'Error al actualizar ticket'}, 400
+
+        return {'Ticket marcado como recolectado': ticket_id}
+        
+    except Exception as e:
+        return {'Error al marcar como recolectado el ticket'}, 400
 
 
 if __name__ == '__main__':
