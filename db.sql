@@ -1,113 +1,100 @@
--- Creacion de TABLAS
+-- Crear Base de Datos
+CREATE DATABASE Caritas
+GO
+USE Caritas
+GO
 
+-- Crear tablas
 CREATE TABLE USUARIOS (
-    id_usuario int IDENTITY(1, 1) NOT NULL,
-    username varchar(255) NOT NULL,
-    password varchar(255) NOT NULL,
-    refreshtoken varchar(255) NULL,
-    role CHAR (10) NOT NULL,
-    PRIMARY KEY(id_usuario)
-)
-
-CREATE TABLE MANAGERS (
-    id_manager int NOT NULL,
-    nombre varchar(255) NULL,
-    activo int NULL,
-    PRIMARY KEY (id_manager),
-    FOREIGN KEY (id_manager) REFERENCES USUARIOS(id_usuario)
-)
-
-CREATE TABLE RECOLECTORES (
-    id_recolector int NOT NULL,
-    nombre varchar(300) NULL,
-    id_zona int NULL,
-    activo int NULL,
-    PRIMARY KEY (id_recolector),
-    FOREIGN KEY (id_recolector) REFERENCES USUARIOS(id_usuario)
+    idUsuario INT IDENTITY(1, 1) NOT NULL,
+    username VARCHAR(30) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+	nombre VARCHAR(20) NOT NULL,
+	apellidoPaterno VARCHAR(15) NOT NULL,
+	apellidoMaterno VARCHAR(15) NOT NULL,
+	activo BIT NOT NULL,
+    refreshtoken VARCHAR(255),
+	idEncargado INT NULL,
+    rol CHAR (10) NOT NULL,
+    PRIMARY KEY(idUsuario),
+	FOREIGN KEY (idEncargado) REFERENCES USUARIOS(idUsuario)
 )
 
 CREATE TABLE DONANTES (
-    id_donante int IDENTITY(1, 1) NOT NULL,
-    a_paterno varchar(100) NOT NULL,
-    a_materno varchar(100) NULL,
-    nombre varchar(100) NOT NULL,
-    email varchar(50) NOT NULL,
-  	direccion varchar (100) NOT NULL,
-    tel_casa int NULL,
-    tel_movil int NULL,
-    ultimo_donativo int NULL,
-    id_genero int NULL,
-    PRIMARY KEY(id_donante)
-)
-
-CREATE TABLE DONATIVOS(
-    id_donativo int IDENTITY(1, 1) NOT NULL,
-    id_donante int NOT NULL,
-    importe float NULL,
-    id_estatus int NULL,
-    PRIMARY KEY(id_donativo),
-    FOREIGN KEY(id_donante) REFERENCES DONANTES(id_donante)
+    nombre VARCHAR(20) NOT NULL,
+    idDonante INT IDENTITY(1, 1) NOT NULL,
+    apellidoPaterno VARCHAR(15) NOT NULL,
+	apellidoMaterno VARCHAR(15) NOT NULL,
+    email VARCHAR(50) NOT NULL,
+  	direccion VARCHAR (100) NOT NULL,
+    telCasa INT NULL,
+    telMovil INT NULL,
+    genero CHAR(1) NOT NULL,
+    PRIMARY KEY(idDonante)
 )
 
 CREATE TABLE BITACORA(
-    id_bitacora int IDENTITY(1, 1) NOT NULL,
-    id_donativo int NOT NULL,
-    id_num_pago int NULL,
-    id_recolector int NULL,
-    fecha_cobro date NULL,
-    fecha_pago date NULL,
-    fecha_visita date NULL,
-    id_recibo varchar(50) NULL,
-    estatus_pago int NULL,
-    comentarios varchar(max) NULL,
-    fecha_confirmacion datetime NULL,
-    fecha_status_pagado datetime NULL,
-    fecha_reprogramacion datetime NULL,
-    reprogramacion_telefonista int NULL DEFAULT ((0)),
-    PRIMARY KEY(id_bitacora),
-    FOREIGN KEY(id_donativo) REFERENCES DONATIVOS(id_donativo),
-    FOREIGN KEY(id_recolector) REFERENCES RECOLECTORES(id_recolector)
+    idBitacora INT IDENTITY(1, 1) NOT NULL,
+    idDonante INT NOT NULL,
+    idRecolector INT NULL,
+    -- id_num_pago INT NULL,
+    importe FLOAT NOT NULL,
+    fechaCobro DATE NOT NULL,
+    fechaVisita DATETIME NULL,
+    estatusPago TINYINT NOT NULL,
+	estatusVisita TINYINT NOT NULL,
+    comentarios VARCHAR(max) NULL,
+    PRIMARY KEY(idBitacora),
+    FOREIGN KEY(idDonante) REFERENCES DONANTES(idDonante),
+    FOREIGN KEY(idRecolector) REFERENCES USUARIOS(idUsuario)
 )
 
--- INSERTS
-
- -- USUARIOS
-INSERT INTO USUARIOS (username, password, refreshtoken, role)
-VALUES ('user1', '$2a$12$DsRB5Urc3dEGs3591XcEFes54zm9Jbi3PZz6fYaNTn3z2onG5lbe6', NULL, 'manager');
-
-INSERT INTO USUARIOS (username, password, refreshtoken, role)
-VALUES ('user2', '$2a$12$DsRB5Urc3dEGs3591XcEFes54zm9Jbi3PZz6fYaNTn3z2onG5lbe6', NULL, 'repartidor');
+-- Resetear indices de las tablas
+-- DBCC CHECKIDENT('USUARIOS', RESEED, 0);
+-- DBCC CHECKIDENT('DONANTES', RESEED, 0);
+-- DBCC CHECKIDENT('BITACORA', RESEED, 0);
 
 
--- MANAGER 
+-- Inserts para managers en la tabla USUARIOS
+INSERT INTO USUARIOS (username, password, nombre, apellidoPaterno, apellidoMaterno, activo, refreshtoken, idEncargado, rol)
+VALUES 
+('user1', '$2a$12$DsRB5Urc3dEGs3591XcEFes54zm9Jbi3PZz6fYaNTn3z2onG5lbe6', 'Juan', 'Perez', 'Gomez', 1, NULL, NULL, 'manager'),
+('user2', '$2a$12$DsRB5Urc3dEGs3591XcEFes54zm9Jbi3PZz6fYaNTn3z2onG5lbe6', 'María', 'Lopez', 'Rodriguez', 1, NULL, NULL, 'manager');
+GO
 
-INSERT INTO MANAGERS (id_manager, nombre, activo)
-VALUES (1, 'Jose Placencia', 1);
+-- Inserts para recolectores en la tabla USUARIOS
+INSERT INTO USUARIOS (username, password, nombre, apellidoPaterno, apellidoMaterno, activo, refreshtoken, idEncargado, rol)
+VALUES 
+('user3', '$2a$12$DsRB5Urc3dEGs3591XcEFes54zm9Jbi3PZz6fYaNTn3z2onG5lbe6', 'Carlos', 'Gonzalez', 'Martinez', 1, NULL, 1, 'recolector'),
+('user4', '$2a$12$DsRB5Urc3dEGs3591XcEFes54zm9Jbi3PZz6fYaNTn3z2onG5lbe6', 'Luis', 'Gutierrez', 'Hernandez', 1, NULL, 1, 'recolector'),
+('user5', '$2a$12$DsRB5Urc3dEGs3591XcEFes54zm9Jbi3PZz6fYaNTn3z2onG5lbe6', 'Ana', 'Diaz', 'Ramirez', 1, NULL, 1, 'recolector'),
+('user6', '$2a$12$DsRB5Urc3dEGs3591XcEFes54zm9Jbi3PZz6fYaNTn3z2onG5lbe6', 'Pedro', 'Martinez', 'Lopez', 1, NULL, 2, 'recolector');
+GO
 
--- Repartidor
-INSERT INTO RECOLECTORES (id_recolector, nombre, id_zona, activo)
-VALUES (2, 'Ricardo Joseua', 2, 1);
+-- Inserts para la tabla DONANTES
+INSERT INTO DONANTES (nombre, apellidoPaterno, apellidoMaterno, email, direccion, telCasa, telMovil, genero)
+VALUES 
+('Roberto', 'Gomez', 'Lopez', 'roberto@gmail.com', 'Calle 123', 123456789, 987654321, 'M'),
+('Laura', 'Rodriguez', 'Gonzalez', 'laura@gmail.com', 'Av. Principal', NULL, 789456123, 'F'),
+('Javier', 'Martinez', 'Perez', 'javier@gmail.com', 'Calle 456', 456123789, NULL, 'M');
+GO
 
--- Donante
+-- Inserts para la tabla BITACORA
+INSERT INTO BITACORA (idDonante, idRecolector, importe, fechaCobro, fechaVisita, estatusPago, estatusVisita, comentarios)
+VALUES 
+(1, 3, 123.00, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(2, 4, 79.15, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(3, 5, 721.79, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(1, 3, 156.00, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(2, 4, 128.99, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(3, 4, 999.99, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL);
+(1, 3, 123.00, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(2, 4, 79.15, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(3, 5, 721.79, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(1, 3, 156.00, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(2, 4, 128.99, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(3, 4, 999.99, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL);
 
-INSERT INTO DONANTES (a_paterno, a_materno, nombre, email, direccion, tel_casa, tel_movil, ultimo_donativo, id_genero)
-VALUES ('Gómez', 'Hernández', 'Ana', 'ana@example.com', 'Calle 123, Ciudad', 12345678, 98765432, 100, 1);
-
-INSERT INTO DONANTES (a_paterno, a_materno, nombre, email, direccion, tel_casa, tel_movil, ultimo_donativo, id_genero)
-VALUES ('López', 'Martínez', 'Carlos', 'carlos@example.com', 'Avenida 456, Pueblo', 98765432, 12345678, 200, 2);
-
--- Donativo
-
-INSERT INTO DONATIVOS (id_donante, importe, id_estatus)
-VALUES (1, 50.00, 0);
-
-INSERT INTO DONATIVOS (id_donante, importe, id_estatus)
-VALUES (2, 75.00, 1);
-
--- BITACORA
-
-INSERT INTO BITACORA (id_donativo, id_num_pago, id_recolector, fecha_cobro, fecha_pago, fecha_visita, id_recibo, estatus_pago, comentarios, fecha_confirmacion, fecha_status_pagado, fecha_reprogramacion, reprogramacion_telefonista)
-VALUES (1, 1, 2, '2023-09-06', '2023-09-07', '2023-09-08', 'REC001', 1, 'Comentario 1', '2023-09-09', '2023-09-10', '2023-09-11', 0);
-
-INSERT INTO BITACORA (id_donativo, id_num_pago, id_recolector, fecha_cobro, fecha_pago, fecha_visita, id_recibo, estatus_pago, comentarios, fecha_confirmacion, fecha_status_pagado, fecha_reprogramacion, reprogramacion_telefonista)
-VALUES (2, 2, 2, '2023-09-07', '2023-09-08', '2023-09-09', 'REC002', 2, 'Comentario 2', '2023-09-10', '2023-09-11', '2023-09-12', 0);
+-- Modificar la fecha de cobro
+-- UPDATE BITACORA
+-- SET fechaCobro = CONVERT(DATE, GETDATE())

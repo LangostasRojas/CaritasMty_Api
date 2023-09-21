@@ -1,6 +1,7 @@
 import pymssql
 import bcrypt
 import jwt
+from flask import jsonify
 import datetime
 from dotenv import load_dotenv
 import os
@@ -28,7 +29,7 @@ def calculate_expiration():
 
 def post_refresh_token(token, userId):
     global cnx, mssql_params
-    query = 'UPDATE USUARIOS SET refreshtoken = %s WHERE id_usuario = %s;'
+    query = 'UPDATE USUARIOS SET refreshtoken = %s WHERE idUsuario = %s;'
 
     try:
         cursor = cnx.cursor(as_dict=True)
@@ -51,7 +52,10 @@ def post_refresh_token(token, userId):
 def sign_in(username, password):
     global cnx, mssql_params, ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY
     # Parametrized query (allows only strings)
-    query = 'SELECT id_usuario, username, role, password FROM USUARIOS WHERE username = %s;'
+    query = """
+            SELECT idUsuario, username, rol, password, nombre, apellidoPaterno + ' ' + apellidoMaterno AS apellidos
+            FROM USUARIOS WHERE username = %s;
+            """
 
     try:
         try:
@@ -69,13 +73,13 @@ def sign_in(username, password):
         
         cursor.close()
 
-        if bcrypt.checkpw(password.encode('utf-8'),user_password):      
+        if bcrypt.checkpw(password.encode('utf-8'), user_password):      
             resultado = {
-                            "userId": result[0]['id_usuario'], 
+                            "userId": result[0]['idUsuario'], 
                             "userName": result[0]['username'], 
-                            # "name": result[0]['name'], 
-                            # "lastName": result[0]['lastname'], 
-                            "role": result[0]['role'],
+                            "name": result[0]['nombre'], 
+                            "lastName": result[0]['apellidos'], 
+                            "role": result[0]['rol'].strip(' '),
                             "exp": calculate_expiration()
                         }
             
@@ -92,18 +96,16 @@ def sign_in(username, password):
     
     except Exception as e:
         return {'error': e}, 401
-        # raise TypeError("Error al iniciar sesion: %s" % e)
 
 
 def get_collector_tickets(user_id, jwt_payload):
     global cnx, mssql_params
     query = """
-            SELECT donativo.id_donativo AS idDonativo, donativo.importe, donante.nombre + ' ' + donante.a_paterno AS nombre, donante.direccion
-            FROM RECOLECTORES r
-            JOIN BITACORA b ON r.id_recolector = b.id_recolector
-            JOIN DONATIVOS donativo  ON donativo.id_donativo = b.id_donativo
-            JOIN DONANTES donante ON donante.id_donante = donativo.id_donante
-            WHERE r.id_recolector = %s AND donativo.id_estatus = 0 AND CONVERT(DATE, b.fecha_cobro) = CONVERT(DATE, GETDATE());
+            SELECT b.idBitacora, b.importe, d.nombre+ ' ' + d.apellidoPaterno AS nombre, d.direccion
+            FROM USUARIOS u
+            JOIN BITACORA b ON b.idRecolector = u.idUsuario
+            JOIN DONANTES d ON d.idDonante = b.idDonante
+            WHERE u.idUsuario= %s AND b.estatusPago = 0 AND CONVERT(DATE, b.fechaCobro) = CONVERT(DATE, GETDATE());
             """
 
     try:
@@ -131,18 +133,16 @@ def get_collector_tickets(user_id, jwt_payload):
 
     except Exception as e:
         return {'error': 'Ocurrio un error al obtener tickets de recolector'}
-        # raise TypeError(f"Error al obtener tickets de recolector: {userId}. Error: {e}")
     
 
 def get_ticket_information(ticket_id, jwt_payload):
     global cnx, mssql_params
     query = """
-            SELECT r.id_recolector AS idRecolector, donativo.id_donativo AS idDonativo, donativo.importe, donante.nombre + ' ' + donante.a_paterno AS nombre, donante.direccion
-            FROM RECOLECTORES r
-            JOIN BITACORA b ON r.id_recolector = b.id_recolector
-            JOIN DONATIVOS donativo  ON donativo.id_donativo = b.id_donativo
-            JOIN DONANTES donante ON donante.id_donante = donativo.id_donante
-            WHERE r.id_recolector = %s;
+            SELECT b.idRecolector AS idRecolector, b.idBitacora AS idTicket, b.importe, d.nombre + ' ' + d.apellidoPaterno nombre, d.direccion
+            FROM USUARIOS u
+            JOIN BITACORA b ON u.idUsuario = b.idRecolector
+            JOIN DONANTES d ON b.idDonante = d.idDonante
+            WHERE b.idBitacora = %s;
             """
     
     try:
@@ -182,11 +182,10 @@ def complete_ticket(ticket_id, jwt_payload):
         def get_recolector_id(ticket_id):
             global cnx, mssql_params
             query_get_id = """
-                        SELECT r.id_recolector AS idRecolector, donativo.id_donativo AS idDonativo
-                        FROM RECOLECTORES r
-                        JOIN BITACORA b ON r.id_recolector = b.id_recolector
-                        JOIN DONATIVOS donativo  ON donativo.id_donativo = b.id_donativo
-                        WHERE donativo.id_donativo = %s;
+                        SELECT u.idUsuario AS idRecolector, b.idBitacora AS ticketId
+                        FROM USUARIOS u
+                        JOIN BITACORA b ON u.idUsuario = b.idRecolector
+                        WHERE b.idBitacora = %s;
                         """
 
             # Obtener datos para ver si es dueño del ticket
@@ -219,9 +218,9 @@ def complete_ticket(ticket_id, jwt_payload):
         def update_ticket(ticket_id):
             global cnx, mssql_params
             query_update = """
-                        UPDATE DONATIVOS
-                        SET id_estatus = 1
-                        WHERE id_donativo = %s
+                        UPDATE BITACORA
+                        SET fechaVisita = GETDATE(), estatusPago = 1, estatusVisita = 1
+                        WHERE idBitacora = %s;
                         """
 
             # Actualizar ticket a completado (recolectado)
@@ -242,7 +241,7 @@ def complete_ticket(ticket_id, jwt_payload):
         except Exception as e:
             return {'error': 'Error al actualizar ticket'}, 400
 
-        return {'Ticket marcado como recolectado': ticket_id}
+        return jsonify(f'Ticket {ticket_id} marcado como recolectado')
         
     except Exception as e:
         return {'Error al marcar como recolectado el ticket'}, 400

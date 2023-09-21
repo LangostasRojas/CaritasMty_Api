@@ -104,7 +104,7 @@ def get_ticket_information():
     return make_response(response)
 
 
-@app.route("/marcar-completado", methods=['POST'])
+@app.route("/mark-completed", methods=['POST'])
 def complete_ticket():
     req = request.json
     ticket_id = req['ticketId']
