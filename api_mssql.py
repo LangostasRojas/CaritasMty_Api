@@ -32,6 +32,18 @@ def exclude_middleware(func):
     return func
 
 # Middlweware
+@app.after_request
+def log_request(response):
+    ip_address = request.remote_addr
+    user_agent = request.headers.get('User-Agent')
+    method = request.method
+    path = request.path
+    response_code = response.status_code
+
+    MSSql.log_request(ip_address, user_agent, method, path, response_code)
+    return response
+
+
 @app.before_request
 def verify_jwt():
     # No verificar token de acceso si el endpoint esta excluido
@@ -65,7 +77,7 @@ def verify_jwt():
     except jwt.DecodeError:
         return {'error': 'Token de acceso invalido'}, 401
     except Exception as e:
-        raise TypeError("Error al verificar token de acceso")
+        return {'error': "Error al verificar token de acceso"}, 401
 
 
 @app.route("/hello")
@@ -78,6 +90,11 @@ def hello():
 @exclude_middleware
 def sign_in():
     req = request.json
+    
+    # Checar que se proporcionaron los datos necesarios
+    if req['username'] is None or req['password'] is None:
+        return make_response({'error': 'Bad request'}, 400)
+    
     username = req['username']
     password = req['password']
 
@@ -88,6 +105,10 @@ def sign_in():
 
 @app.route("/get-recolector-tickets", methods=['GET'])
 def get_recolector_tickets():
+    # Checar que se proporciono el id del recolector
+    if 'userId' not in request.args:
+        return make_response({'error': 'Bad request'}, 400)
+    
     user_id = request.args.get('userId')
 
     response = MSSql.get_collector_tickets(user_id, request.userJWT)
@@ -97,6 +118,10 @@ def get_recolector_tickets():
 
 @app.route("/get-ticket-information", methods=['GET'])
 def get_ticket_information():
+    # Checar que se proporciono el id del ticket
+    if 'ticketId' not in request.args:
+        return make_response({'error': 'Bad request'}, 400)
+
     ticket_id = request.args.get('ticketId')
 
     response = MSSql.get_ticket_information(ticket_id, request.userJWT)
@@ -107,6 +132,11 @@ def get_ticket_information():
 @app.route("/mark-completed", methods=['POST'])
 def complete_ticket():
     req = request.json
+
+    # Checar que se proporciono el id del ticket
+    if 'ticketId' not in req:
+        return make_response({'error': 'Bad request'}, 400)
+
     ticket_id = req['ticketId']
 
     response = MSSql.complete_ticket(ticket_id, request.userJWT)

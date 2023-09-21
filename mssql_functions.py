@@ -45,8 +45,7 @@ def post_refresh_token(token, userId):
         cnx.commit()  # Commit the changes to the database
         cursor.close()
     except Exception as e:
-        print("Error al iniciar sesion:", e)
-        raise TypeError("Error al iniciar sesion: %s" % e)
+        return {'Error al obtener datos de ticket'}, 401
 
 
 def sign_in(username, password):
@@ -61,12 +60,12 @@ def sign_in(username, password):
         try:
             cursor = cnx.cursor(as_dict=True)
             # Execute query using username as parameter
-            cursor.execute(query, (username))
+            cursor.execute(query, (username, ))
         except pymssql._pymssql.InterfaceError:
             print("La langosta se esta conectando...")
             cnx = mssql_connect(mssql_params)
             cursor = cnx.cursor(as_dict=True)
-            cursor.execute(query, (username))
+            cursor.execute(query, (username, ))
         
         result = cursor.fetchall()
         user_password = result[0]['password'].encode('utf-8')
@@ -95,7 +94,7 @@ def sign_in(username, password):
             return {'error': 'Usuario o contraseña incorrectos'}, 401
     
     except Exception as e:
-        return {'error': e}, 401
+        return {'error': 'Error al iniciar sesi'}, 401
 
 
 def get_collector_tickets(user_id, jwt_payload):
@@ -119,12 +118,12 @@ def get_collector_tickets(user_id, jwt_payload):
         
         try:
             cursor = cnx.cursor(as_dict=True)
-            cursor.execute(query, (user_id,))
+            cursor.execute(query, (user_id, ))
         except pymssql._pymssql.InterfaceError:
             print("La langosta se esta conectando...")
             cnx = mssql_connect(mssql_params)
             cursor = cnx.cursor(as_dict=True)
-            cursor.execute(query, (user_id,))
+            cursor.execute(query, (user_id, ))
 
         result = cursor.fetchall()
         cursor.close()
@@ -152,12 +151,12 @@ def get_ticket_information(ticket_id, jwt_payload):
 
         try:
             cursor = cnx.cursor(as_dict=True)
-            cursor.execute(query, (ticket_id,))
+            cursor.execute(query, (ticket_id, ))
         except pymssql._pymssql.InterfaceError:
             print("La langosta se esta conectando...")
             cnx = mssql_connect(mssql_params)
             cursor = cnx.cursor(as_dict=True)
-            cursor.execute(query, (ticket_id,))
+            cursor.execute(query, (ticket_id, ))
         
         result = cursor.fetchall()
         cursor.close()
@@ -191,12 +190,12 @@ def complete_ticket(ticket_id, jwt_payload):
             # Obtener datos para ver si es dueño del ticket
             try:
                 cursor = cnx.cursor(as_dict=True)
-                cursor.execute(query_get_id, (ticket_id,))
+                cursor.execute(query_get_id, (ticket_id, ))
             except pymssql._pymssql.InterfaceError:
                 print("La langosta se esta conectando...")
                 cnx = mssql_connect(mssql_params)
                 cursor = cnx.cursor(as_dict=True)
-                cursor.execute(query_get_id, (ticket_id,))
+                cursor.execute(query_get_id, (ticket_id, ))
             
             result = cursor.fetchall()
             cursor.close()
@@ -226,14 +225,14 @@ def complete_ticket(ticket_id, jwt_payload):
             # Actualizar ticket a completado (recolectado)
             try:
                 cursor = cnx.cursor(as_dict=True)
-                cursor.execute(query_update, (ticket_id,))
+                cursor.execute(query_update, (ticket_id, ))
                 cnx.commit()  # Commit the changes to the database
                 cursor.close()
             except pymssql._pymssql.InterfaceError:
                 print("La langosta se esta conectando...")
                 cnx = mssql_connect(mssql_params)
                 cursor = cnx.cursor(as_dict=True)
-                cursor.execute(query_update, (ticket_id,))
+                cursor.execute(query_update, (ticket_id, ))
                 cnx.commit()  # Commit the changes to the database
                 cursor.close()
         try:
@@ -245,6 +244,31 @@ def complete_ticket(ticket_id, jwt_payload):
         
     except Exception as e:
         return {'Error al marcar como recolectado el ticket'}, 400
+
+
+def log_request(ip_address, user_agent, method, path, response_code):
+    global cnx, mssql_params
+    query = """
+        INSERT INTO LOGS (ipAddress, userAgent, method, path, responseCode, fecha)
+        VALUES (%s, %s, %s, %s, %s, GETDATE());
+        """
+    
+    try:
+        try:
+            cursor = cnx.cursor(as_dict=True)
+            cursor.execute(query, (ip_address, user_agent, method, path, response_code,))
+            cnx.commit()  # Commit the changes to the database
+            cursor.close()
+        except pymssql._pymssql.InterfaceError:
+            print("La langosta se esta conectando...")
+            cnx = mssql_connect(mssql_params)
+            cursor = cnx.cursor(as_dict=True)
+            cursor.execute(query, (ip_address, user_agent, method, path, response_code,))
+            cnx.commit()  # Commit the changes to the database
+            cursor.close()
+        
+    except Exception as e:
+        return {'Error al obtener datos de ticket'}, 401
 
 
 if __name__ == '__main__':

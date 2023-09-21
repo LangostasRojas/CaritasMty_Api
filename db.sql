@@ -49,6 +49,16 @@ CREATE TABLE BITACORA(
     FOREIGN KEY(idRecolector) REFERENCES USUARIOS(idUsuario)
 )
 
+CREATE TABLE LOGS(
+    id INT IDENTITY(1, 1) NOT NULL,
+    ipAddress VARCHAR(20) NOT NULL,
+    userAgent VARCHAR(255) NOT NULL,
+    method VARCHAR(10) NOT NULL,
+    path VARCHAR(255) NOT NULL,
+    responseCode VARCHAR(3) NOT NULL,
+    fecha DATETIME NOT NULL,
+)
+
 -- Resetear indices de las tablas
 -- DBCC CHECKIDENT('USUARIOS', RESEED, 0);
 -- DBCC CHECKIDENT('DONANTES', RESEED, 0);
