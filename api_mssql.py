@@ -102,8 +102,9 @@ def sign_in():
 
     return make_response(response)
 
-
+# TODO - Change route in frontend to /get-collector-tickets
 @app.route("/get-recolector-tickets", methods=['GET'])
+# @app.route("/get-collector-tickets", methods=['GET'])
 def get_recolector_tickets():
     # Checar que se proporciono el id del recolector
     if 'userId' not in request.args:
@@ -131,6 +132,8 @@ def get_ticket_information():
 
 @app.route("/mark-completed", methods=['POST'])
 def complete_ticket():
+    # Mark a ticket as collected
+    # TODO - Select whether the ticket was collected or not
     req = request.json
 
     # Checar que se proporciono el id del ticket
@@ -142,6 +145,43 @@ def complete_ticket():
     response = MSSql.complete_ticket(ticket_id, request.userJWT)
 
     return make_response(response)
+
+
+# TODO
+@app.route("/get-user-information", methods=['GET'])
+def get_user_information():
+    # Return name, lastname and image of user
+    pass
+
+
+# TODO
+@app.route("/get-manager-collectors", methods=['GET'])
+def get_manager_collectors():
+    # Return list of collectors and their tickets: 
+    #  (Collectors have to be related to a manager)
+    pass
+
+
+# TODO
+@app.route("/get-collector-daily-information", methods=['GET'])
+def get_collector_daily_information():
+    # Return the daily information of a collector: total collected, estimated collected, estatus. Has to be related to a manager
+    # Check if collectorId is provided in request
+    if 'collectorId' not in request.args:
+        return make_response({'error': 'Bad request'}, 400)
+
+    collector_id = request.args.get('collectorId')
+
+    response = MSSql.get_collector_daily_information(collector_id, request.userJWT)
+
+    return make_response(response)
+
+
+# TODO
+@app.route("/change-ticket-collector", methods=['POST'])
+def change_ticket_collector():
+    # Change the collector of a ticket
+    pass
 
 
 if __name__ == '__main__':

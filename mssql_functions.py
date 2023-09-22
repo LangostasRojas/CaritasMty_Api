@@ -174,7 +174,7 @@ def get_ticket_information(ticket_id, jwt_payload):
 
 def complete_ticket(ticket_id, jwt_payload):    
     try:
-        # Verificar que ticket_id sea un entero
+        # Verify that ticket_id is an INT
         try: ticket_id = int(ticket_id)
         except Exception as e: return {'error': 'Ticket no valido'}, 406
 
@@ -269,6 +269,116 @@ def log_request(ip_address, user_agent, method, path, response_code):
         
     except Exception as e:
         return {'Error al obtener datos de ticket'}, 401
+
+
+def get_collector_daily_information(collector_id, jwt_payload):
+    try:
+        # Verify that collector_id is an INT
+        try: collector_id = int(collector_id)
+        except Exception as e: return {'error': 'Id recolector no valido'}, 406
+
+        def get_manager_id(collector_id):
+            global cnx, mssql_params
+            query_get_id = """
+                        SELECT idEncargado
+                        FROM USUARIOS 
+                        WHERE idUsuario = %s;
+                        """
+
+            # Obtener datos para ver si el id de manager es el correcto
+            try:
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query_get_id, (collector_id, ))
+            except pymssql._pymssql.InterfaceError:
+                print("La langosta se esta conectando...")
+                cnx = mssql_connect(mssql_params)
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query_get_id, (collector_id, ))
+            
+            result = cursor.fetchall()
+            cursor.close()
+            return result
+        
+        try:
+            result = get_manager_id(collector_id)
+        except Exception as e:
+            raise TypeError("Error al actualizar ticket: %s" % e)
+
+        # Verificar que el recolector exista o que no sea un manager
+        if len(result) == 0 or result[0]['idEncargado'] == None:
+            return {'error': 'Recolector no encontrado'}, 404
+        # Verificar que el id de manager sea el correcto
+        if result[0]['idEncargado'] != jwt_payload['userId']:
+            return {'error': 'Acceso no autorizado'}, 401
+        
+        def get_collector_information(collector_id):
+            global cnx, mssql_params
+            query_update = """
+                        SELECT b.idRecolector, SUM(b.importe) AS montoEstimado, COALESCE(avance.montoRecolectado, 0) AS montoRecolectado, 
+                            CASE 
+                                WHEN EXISTS (
+                                    SELECT 1
+                                    FROM BITACORA b2
+                                    WHERE b2.idRecolector = b.idRecolector
+                                        AND b2.estatusPago = 0
+                                ) THEN 'Pendiente'
+                                ELSE 'Completado'
+                            END AS estatusPago,
+                            CASE 
+                                WHEN EXISTS (
+                                    SELECT 1
+                                    FROM BITACORA b2
+                                    WHERE b2.idRecolector = b.idRecolector
+                                        AND b2.estatusVisita <> 0
+                                    ) THEN 'En Ruta'
+                                ELSE 'Sin Empezar'
+                            END AS estatusVisita
+                        FROM USUARIOS u
+                        JOIN BITACORA b ON b.idRecolector = u.idUsuario
+                        LEFT JOIN (
+                            SELECT b2.idRecolector, SUM(b2.importe) as MontoRecolectado
+                            FROM USUARIOS u2
+                            JOIN BITACORA b2 ON b2.idRecolector = u2.idUsuario
+                            WHERE u2.idUsuario = %s AND b2.estatusPago = 1 AND CONVERT(DATE, b2.fechaCobro) = CONVERT(DATE, GETDATE())
+                            GROUP BY b2.idRecolector
+                        ) avance ON avance.idRecolector = b.idRecolector
+                        WHERE u.idUsuario= %s AND CONVERT(DATE, b.fechaCobro) = CONVERT(DATE, GETDATE())
+                        GROUP BY b.idRecolector, avance.MontoRecolectado;
+                        """
+
+            # Obtener datos del recolector para ese dia
+            try:
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query_update, (collector_id, collector_id ))
+            except pymssql._pymssql.InterfaceError:
+                print("La langosta se esta conectando...")
+                cnx = mssql_connect(mssql_params)
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query_update, (collector_id, collector_id))
+                
+            result = cursor.fetchall()
+            cursor.close()
+            return result
+        
+        try:
+            result = get_collector_information(collector_id)
+        except Exception as e:
+            return {'error': 'Error obtener datos del recolector'}, 400
+        
+        resultado = {
+                    "montoEstimado": result[0]['montoEstimado'], 
+                    "montoRecolectado": result[0]['montoRecolectado'],
+                    "idRecolector": result[0]['idRecolector'],
+                    }
+
+        if result[0]['estatusPago'] == 'Completado': resultado['estatus'] = 'Completado'
+        elif result[0]['estatusVisita'] == 'En Ruta': resultado['estatus'] = 'En Ruta'
+        else: resultado['estatus'] = 'Sin Empezar'
+
+        return resultado
+        
+    except Exception as e:
+        return {'Error al marcar como recolectado el ticket'}, 400
 
 
 if __name__ == '__main__':
