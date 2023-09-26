@@ -105,7 +105,9 @@ def sign_in():
     return make_response(response)
 
 
-# TODO - Change route in frontend to /get-collector-tickets
+# TODO - Change route in frontend to /get-collector-tickets (Quizas se ocupe hacer modificaciones en frontend en como se llaman las variables que recibe)
+# Ver los tickets que tiene asignados un recolector (App Recolector)
+# Regresa (lista) - idTicket, importe, nombre (donante), direccion
 @app.route("/get-recolector-tickets", methods=['GET'])
 # @app.route("/get-collector-tickets", methods=['GET'])
 def get_recolector_tickets():
@@ -120,6 +122,8 @@ def get_recolector_tickets():
     return make_response(response)
 
 
+# Ver los datos especificos de un ticket (App Recolector)
+# Regresa - idRecolector, idTicket, importe, nombre (donante), direccion
 @app.route("/get-ticket-information", methods=['GET'])
 def get_ticket_information():
     # Checar que se proporciono el id del ticket
@@ -133,23 +137,63 @@ def get_ticket_information():
     return make_response(response)
 
 
+# Marcar un ticket como completado (App Recolector)
+# Marcar ticket como recolectado (1) o no recolectado (2)
 @app.route("/mark-completed", methods=['POST'])
 def complete_ticket():
     # Mark a ticket as collected
-    # TODO - Select whether the ticket was collected or not
     req = request.json
 
-    # Checar que se proporciono el id del ticket
+    # Checar que se proporciono el id del ticket y estatus (0: pendiente, 1: recolectado, 2: no recolectado)
+    if 'ticketId' not in req or 'estatus' not in req:
+        return make_response({'error': 'Bad request'}, 400)
+
+    ticket_id = req['ticketId']
+    status = req['estatus']
+
+    response = MSSql.complete_ticket(ticket_id, status, request.userJWT)
+
+    return make_response(response)
+
+
+# TODO - crear ruta para marcar que va en camino a recolectar un ticket (estatusVisita)
+# Marcar el estatus de visita de un ticket (App Recolector)
+# estatusVisita: 0 - Pendiente, 1 - En camino, 2 - Visitado
+@app.route("/mark-visit", methods=['POST'])
+def mark_visit():
+    # Mark a ticket as visited
+    req = request.json
+
+    # Checar que se proporciono el id del ticket y estatus (0: pendiente, 1: en camino, 2: visitado)
     if 'ticketId' not in req:
         return make_response({'error': 'Bad request'}, 400)
 
     ticket_id = req['ticketId']
 
-    response = MSSql.complete_ticket(ticket_id, request.userJWT)
+    response = MSSql.mark_visit(ticket_id, request.userJWT)
 
     return make_response(response)
 
 
+# TODO
+# Escribir un comentario en un ticket (App Recolector)
+@app.route("/set-comment", methods=['POST'])
+def set_comment():
+    # Set comment to a ticket
+    req = request.json
+
+    if 'ticketId' not in req or 'comment' not in req:
+        return make_response({'error': 'Bad request'}, 400)
+    
+    response = MSSql.set_comment(req['ticketId'], req['comment'], request.userJWT)
+
+    return make_response(response)
+
+
+
+
+# Ayuda a generar un dropdown en el frontend y elegir un recolector diferente para un ticket (App Manager)
+# Rgresa (lista) - nombre y idRecolector
 @app.route("/get-list-collectors", methods=['GET'])
 def get_list_collectors():
     # Return list of collectors
@@ -158,9 +202,10 @@ def get_list_collectors():
     return make_response(response)
 
 
+# Ver datos especificos de un recolector de ese dia (App Manager)
+# Regresa - idRecolector, montoEstimado, montoRecolectado, estatusPago, estatusVisita
 @app.route("/get-collector-daily-information", methods=['GET'])
 def get_collector_daily_information():
-    # Return the daily information of a collector: total collected, estimated collected, estatus. Has to be related to a manager
     # Check if collectorId is provided in request
     if 'collectorId' not in request.args:
         return make_response({'error': 'Bad request'}, 400)
@@ -172,6 +217,9 @@ def get_collector_daily_information():
     return make_response(response)
 
 
+# Pantalla de inicio de la app manager (App Manager)
+# Muestra lista recolectores con lista de tickets asignados
+# Regresa (lista 2D) - idRecolector, idTicket, importe, nombre, estatus (estatusVisita)
 @app.route("/get-manager-collectors", methods=['GET'])
 def get_manager_collectors():
     # Return list of collectors and their tickets: 
@@ -181,7 +229,7 @@ def get_manager_collectors():
     return make_response(response)
 
 
-# TODO
+# Cambiar el recolector de un ticket (App Manager)
 @app.route("/change-ticket-collector", methods=['PUT'])
 def change_ticket_collector():
     # Change the collector of a ticket
@@ -193,6 +241,22 @@ def change_ticket_collector():
     
     response = MSSql.change_ticket_collector(req['ticketId'], req['collectorId'], request.userJWT)
     
+    return make_response(response)
+
+
+# TODO - crear ruta para ver informacion especifica de un ticket (App Manager)
+# Ver datos especificos de un ticket (App Manager)
+# Regresa - idRecolector, idTicket, importe, nombre (donante), direccion, comentario, estatus (mismo subqueries que tiene get-collector-daily-information)
+@app.route("/get-manager-ticket-information", methods=['GET'])
+def get_manager_ticket_information():
+    # Check if ticketId is provided in request
+    if 'ticketId' not in request.args:
+        return make_response({'error': 'Bad request'}, 400)
+
+    ticket_id = request.args.get('ticketId')
+
+    response = MSSql.get_manager_ticket_information(ticket_id, request.userJWT)
+
     return make_response(response)
 
 

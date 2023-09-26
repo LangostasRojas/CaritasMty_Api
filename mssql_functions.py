@@ -99,7 +99,7 @@ def sign_in(username, password):
 def get_collector_tickets(user_id, jwt_payload):
     global cnx, mssql_params
     query = """
-            SELECT b.idBitacora, b.importe, d.nombre+ ' ' + d.apellidoPaterno AS nombre, d.direccion
+            SELECT b.idBitacora AS idTicket, b.importe AS importe, d.nombre + ' ' + d.apellidoPaterno AS nombre, d.direccion
             FROM USUARIOS u
             JOIN BITACORA b ON b.idRecolector = u.idUsuario
             JOIN DONANTES d ON d.idDonante = b.idDonante
@@ -171,7 +171,7 @@ def get_ticket_information(ticket_id, jwt_payload):
         return {'Error al obtener datos de ticket'}, 401
 
 
-def complete_ticket(ticket_id, jwt_payload):    
+def complete_ticket(ticket_id, payment_status, jwt_payload):    
     try:
         # Verify that ticket_id is an INT
         try: ticket_id = int(ticket_id)
@@ -213,25 +213,25 @@ def complete_ticket(ticket_id, jwt_payload):
             return {'error': 'Acceso no autorizado'}, 401
         
         
-        def update_ticket(ticket_id):
+        def update_ticket(ticket_id, payment_status):
             global cnx, mssql_params
             query_update = """
                         UPDATE BITACORA
-                        SET fechaVisita = GETDATE(), estatusPago = 1, estatusVisita = 1
+                        SET fechaVisita = GETDATE(), estatusPago = %s, estatusVisita = 1
                         WHERE idBitacora = %s;
                         """
 
             # Actualizar ticket a completado (recolectado)
             try:
                 cursor = cnx.cursor(as_dict=True)
-                cursor.execute(query_update, (ticket_id, ))
+                cursor.execute(query_update, (payment_status, ticket_id, ))
                 cnx.commit()  # Commit the changes to the database
                 cursor.close()
             except pymssql._pymssql.InterfaceError:
                 print("La langosta se esta conectando...")
                 cnx = mssql_connect(mssql_params)
                 cursor = cnx.cursor(as_dict=True)
-                cursor.execute(query_update, (ticket_id, ))
+                cursor.execute(query_update, (payment_status, ticket_id, ))
                 cnx.commit()  # Commit the changes to the database
                 cursor.close()
         try:
@@ -604,6 +604,21 @@ def change_ticket_collector(ticket_id, new_collector_id, jwt_payload):
         
     except Exception as e:
         return {'Error al marcar como recolectado el ticket'}, 400
+
+
+# TODO
+def mark_visit(ticket_id, jwt_payload):
+    pass
+
+
+# TODO
+def set_comment(ticket_id, comment, jwt_payload):
+    pass
+
+
+# TODO
+def get_manager_ticket_information(ticket_id, jwt_payload):
+    pass
 
 
 if __name__ == '__main__':
