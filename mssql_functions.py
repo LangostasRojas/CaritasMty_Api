@@ -1,7 +1,6 @@
 import pymssql
 import bcrypt
 import jwt
-from flask import jsonify
 import datetime
 from dotenv import load_dotenv
 import os
@@ -178,7 +177,7 @@ def complete_ticket(ticket_id, jwt_payload):
         try: ticket_id = int(ticket_id)
         except Exception as e: return {'error': 'Ticket no valido'}, 406
 
-        def get_recolector_id(ticket_id):
+        def get_collector_id(ticket_id):
             global cnx, mssql_params
             query_get_id = """
                         SELECT u.idUsuario AS idRecolector, b.idBitacora AS ticketId
@@ -202,7 +201,7 @@ def complete_ticket(ticket_id, jwt_payload):
             return result
         
         try:
-            result = get_recolector_id(ticket_id)
+            result = get_collector_id(ticket_id)
         except Exception as e:
             raise TypeError("Error al actualizar ticket: %s" % e)
 
@@ -240,30 +239,30 @@ def complete_ticket(ticket_id, jwt_payload):
         except Exception as e:
             return {'error': 'Error al actualizar ticket'}, 400
 
-        return jsonify(f'Ticket {ticket_id} marcado como recolectado')
+        return {'completado': f'Ticket {ticket_id} marcado como recolectado'}
         
     except Exception as e:
         return {'Error al marcar como recolectado el ticket'}, 400
 
 
-def log_request(ip_address, user_agent, method, path, response_code):
+def log_request(ip_address, user_agent, method, path, response_code, jwt):
     global cnx, mssql_params
     query = """
-        INSERT INTO LOGS (ipAddress, userAgent, method, path, responseCode, fecha)
-        VALUES (%s, %s, %s, %s, %s, GETDATE());
+        INSERT INTO LOGS (ipAddress, userAgent, method, path, responseCode, token, fecha)
+        VALUES (%s, %s, %s, %s, %s, %s, GETDATE());
         """
     
     try:
         try:
             cursor = cnx.cursor(as_dict=True)
-            cursor.execute(query, (ip_address, user_agent, method, path, response_code,))
+            cursor.execute(query, (ip_address, user_agent, method, path, response_code, jwt))
             cnx.commit()  # Commit the changes to the database
             cursor.close()
         except pymssql._pymssql.InterfaceError:
             print("La langosta se esta conectando...")
             cnx = mssql_connect(mssql_params)
             cursor = cnx.cursor(as_dict=True)
-            cursor.execute(query, (ip_address, user_agent, method, path, response_code,))
+            cursor.execute(query, (ip_address, user_agent, method, path, response_code, jwt))
             cnx.commit()  # Commit the changes to the database
             cursor.close()
         
@@ -302,7 +301,7 @@ def get_collector_daily_information(collector_id, jwt_payload):
         try:
             result = get_manager_id(collector_id)
         except Exception as e:
-            raise TypeError("Error al actualizar ticket: %s" % e)
+            return {'error': 'Error al obtener id de manager'}, 400
 
         # Verificar que el recolector exista o que no sea un manager
         if len(result) == 0 or result[0]['idEncargado'] == None:
@@ -365,6 +364,10 @@ def get_collector_daily_information(collector_id, jwt_payload):
         except Exception as e:
             return {'error': 'Error obtener datos del recolector'}, 400
         
+        if len(result) == 0:
+            # TODO cambiar mensaje a JSON
+            return "No hay informacion del recolector para el dia de hoy"
+        
         resultado = {
                     "montoEstimado": result[0]['montoEstimado'], 
                     "montoRecolectado": result[0]['montoRecolectado'],
@@ -376,6 +379,228 @@ def get_collector_daily_information(collector_id, jwt_payload):
         else: resultado['estatus'] = 'Sin Empezar'
 
         return resultado
+        
+    except Exception as e:
+        return {'Error al obtener los datos del recolector para el dia de hoy'}, 400
+    
+
+def get_manager_collectors(jwt_payload):
+    try:
+        # Verificar que el rol sea el de manager
+        if jwt_payload['role'] != "manager":
+            return {'error': 'Acceso no autorizado'}, 401
+        
+        def get_collectors_id(manager_id):
+            global cnx, mssql_params
+            query = "SELECT idUsuario FROM USUARIOS WHERE idEncargado = %s;"
+
+            # Obtener datos del recolector para ese dia
+            try:
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query, (manager_id, ))
+            except pymssql._pymssql.InterfaceError:
+                print("La langosta se esta conectando...")
+                cnx = mssql_connect(mssql_params)
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query, (manager_id, ))
+                
+            result = cursor.fetchall()
+            cursor.close()
+            return result
+        
+        try:
+            collectors_id = get_collectors_id(jwt_payload['userId'])
+        except Exception as e:
+            return {'error': 'Error obteniendo ids de recolectores'}, 400
+
+        def get_collector_information(collector_id):
+            global cnx, mssql_params
+            query = """
+                    SELECT b.idRecolector AS idRecolector, b.idBitacora AS idTicket, b.importe, d.nombre + ' ' + d.apellidoPaterno nombre, d.direccion, b.estatusVisita AS estatus
+                    FROM USUARIOS u
+                    JOIN BITACORA b ON u.idUsuario = b.idRecolector
+                    JOIN DONANTES d ON b.idDonante = d.idDonante
+                    WHERE b.idRecolector = %s;
+                    """
+
+            # Obtener datos del recolector para ese dia
+            try:
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query, (collector_id, ))
+            except pymssql._pymssql.InterfaceError:
+                print("La langosta se esta conectando...")
+                cnx = mssql_connect(mssql_params)
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query, (collector_id, ))
+                
+            result = cursor.fetchall()
+            cursor.close()
+
+            # Cambiar estatus de recoleccion a texto
+            if len(result) != 0:
+                for ticket in result:
+                    if ticket['estatus'] == 0: ticket['estatus'] = 'Sin Empezar'
+                    elif ticket['estatus'] == 1: ticket['estatus'] = 'En Ruta'
+                    else: ticket['estatus'] = 'Completado'
+
+            return result
+        
+        resultado = []
+        try:
+            for collector in collectors_id:
+                resultado.append(get_collector_information(collector['idUsuario']))                
+        except Exception as e:
+            return {'error': 'Error obteniendo datos del recolector'}, 400
+        
+        if len(resultado) == 0:
+            # TODO cambiar mensaje a JSON
+            return "No hay informacion de los recolectores para el dia de hoy"
+        
+        return resultado
+        
+    except Exception as e:
+        return {'Error al obtener los datos del recolector para el dia de hoy'}, 400
+
+
+def get_list_collectors(jwt_payload):
+    try:
+        # Verificar que el rol sea el de manager
+        if jwt_payload['role'] != "manager":
+            return {'error': 'Acceso no autorizado'}, 401
+        
+        def get_collectors():
+            global cnx, mssql_params
+            query = "SELECT nombre + ' ' + apellidoPaterno AS nombre, idUsuario AS recolectorId FROM USUARIOS"
+
+            # Obtener datos del recolector para ese dia
+            try:
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query)
+            except pymssql._pymssql.InterfaceError:
+                print("La langosta se esta conectando...")
+                cnx = mssql_connect(mssql_params)
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query)
+                
+            result = cursor.fetchall()
+            cursor.close()
+            return result
+        
+        try:
+            result = get_collectors()
+        except Exception as e:
+            return {'error': 'Error obteniendo el listado de recolectores'}, 400
+        
+        if len(result) == 0:
+            # TODO cambiar mensaje a JSON
+            return "No hay recolectores que mostrar"
+
+        return result
+        
+    except Exception as e:
+        return {'Error obtener listado de recolectores'}, 400
+
+
+def change_ticket_collector(ticket_id, new_collector_id, jwt_payload):
+    try:
+        # Verify that ticket_id is an INT
+        try: ticket_id = int(ticket_id)
+        except Exception as e: return {'error': 'Ticket no valido'}, 406
+
+        def get_manager_id(collector_id):
+            global cnx, mssql_params
+            query = """
+                    SELECT idEncargado
+                    FROM USUARIOS 
+                    WHERE idUsuario = %s;
+                    """
+
+            # Obtener datos para ver si el id de manager es el correcto
+            try:
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query, (collector_id, ))
+            except pymssql._pymssql.InterfaceError:
+                print("La langosta se esta conectando...")
+                cnx = mssql_connect(mssql_params)
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query, (collector_id, ))
+            
+            result = cursor.fetchall()
+            cursor.close()
+            return result
+        
+        try:
+            result = get_manager_id(new_collector_id)
+        except Exception as e:
+            return {'error': 'Error al obtener id de manager'}, 400
+
+        # Verificar que el recolector exista o que no sea un manager
+        if len(result) == 0 or result[0]['idEncargado'] == None:
+            return {'error': 'Recolector no encontrado'}, 404
+        # Verificar que el id de manager sea el correcto
+        if result[0]['idEncargado'] != jwt_payload['userId']:
+            return {'error': 'Acceso no autorizado'}, 401
+        
+
+        def check_ticket_existence(ticket_id):
+            global cnx, mssql_params
+            query = """
+                    SELECT *
+                    FROM BITACORA
+                    WHERE idBitacora = %s;
+                    """
+
+            # Obtener datos para ver si el id de manager es el correcto
+            try:
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query, (ticket_id, ))
+            except pymssql._pymssql.InterfaceError:
+                print("La langosta se esta conectando...")
+                cnx = mssql_connect(mssql_params)
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query, (ticket_id, ))
+            
+            result = cursor.fetchall()
+            cursor.close()
+            return result
+        
+        try:
+            result = check_ticket_existence(ticket_id)
+        except Exception as e:
+            return {'error': 'Error al obtener id de manager'}, 400
+        
+        # Verificar si el ticket existe
+        if len(result) == 0:
+            return {'error': 'Ticket no encontrado'}, 404
+                
+        
+        def update_ticket(ticket_id, new_collector_id):
+            global cnx, mssql_params
+            query_update = """
+                        UPDATE BITACORA
+                        SET idRecolector = %s
+                        WHERE idBitacora = %s;
+                        """
+
+            # Actualizar ticket a completado (recolectado)
+            try:
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query_update, (new_collector_id, ticket_id, ))
+                cnx.commit()  # Commit the changes to the database
+                cursor.close()
+            except pymssql._pymssql.InterfaceError:
+                print("La langosta se esta conectando...")
+                cnx = mssql_connect(mssql_params)
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query_update, (new_collector_id, ticket_id, ))
+                cnx.commit()  # Commit the changes to the database
+                cursor.close()
+        try:
+            update_ticket(ticket_id, new_collector_id)
+        except Exception as e:
+            return {'error': 'Error al actualizar ticket'}, 400
+
+        return {'completado': f'Ticket {ticket_id} asignado a recolector con id: {new_collector_id}'}
         
     except Exception as e:
         return {'Error al marcar como recolectado el ticket'}, 400

@@ -57,6 +57,8 @@ CREATE TABLE LOGS(
     path VARCHAR(255) NOT NULL,
     responseCode VARCHAR(3) NOT NULL,
     fecha DATETIME NOT NULL,
+    token VARCHAR(255) NULL,
+    PRIMARY KEY(id)
 )
 
 -- Resetear indices de las tablas

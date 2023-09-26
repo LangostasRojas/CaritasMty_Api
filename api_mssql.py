@@ -1,4 +1,4 @@
-from flask import Flask, make_response, request
+from flask import Flask, make_response, request, g
 import sys
 import mssql_functions as MSSql
 from dotenv import load_dotenv
@@ -39,8 +39,9 @@ def log_request(response):
     method = request.method
     path = request.path
     response_code = response.status_code
+    jwt = g.get('userJWT', None)
 
-    MSSql.log_request(ip_address, user_agent, method, path, response_code)
+    MSSql.log_request(ip_address, user_agent, method, path, response_code, jwt)
     return response
 
 
@@ -71,6 +72,7 @@ def verify_jwt():
         if 'exp' in payload and payload['exp'] < int(time.time()):
             return {'error': 'Token de acceso caducado'}, 401
         request.userJWT = payload
+        g.userJWT = access_token
     
     except jwt.ExpiredSignatureError:
         return {'error': 'Token de acceso caducado'}, 401
@@ -101,6 +103,7 @@ def sign_in():
     response = MSSql.sign_in(username, password)
 
     return make_response(response)
+
 
 # TODO - Change route in frontend to /get-collector-tickets
 @app.route("/get-recolector-tickets", methods=['GET'])
@@ -147,22 +150,14 @@ def complete_ticket():
     return make_response(response)
 
 
-# TODO
-@app.route("/get-user-information", methods=['GET'])
-def get_user_information():
-    # Return name, lastname and image of user
-    pass
+@app.route("/get-list-collectors", methods=['GET'])
+def get_list_collectors():
+    # Return list of collectors
+    response = MSSql.get_list_collectors(request.userJWT)
+
+    return make_response(response)
 
 
-# TODO
-@app.route("/get-manager-collectors", methods=['GET'])
-def get_manager_collectors():
-    # Return list of collectors and their tickets: 
-    #  (Collectors have to be related to a manager)
-    pass
-
-
-# TODO
 @app.route("/get-collector-daily-information", methods=['GET'])
 def get_collector_daily_information():
     # Return the daily information of a collector: total collected, estimated collected, estatus. Has to be related to a manager
@@ -177,10 +172,34 @@ def get_collector_daily_information():
     return make_response(response)
 
 
+@app.route("/get-manager-collectors", methods=['GET'])
+def get_manager_collectors():
+    # Return list of collectors and their tickets: 
+    #  (Collectors have to be related to a manager)
+    response = MSSql.get_manager_collectors(request.userJWT)
+
+    return make_response(response)
+
+
 # TODO
-@app.route("/change-ticket-collector", methods=['POST'])
+@app.route("/change-ticket-collector", methods=['PUT'])
 def change_ticket_collector():
     # Change the collector of a ticket
+    # Checar que se proporciono el id del ticket
+    req = request.json
+
+    if 'ticketId' not in req or 'collectorId' not in req:
+        return make_response({'error': 'Bad request'}, 400)
+    
+    response = MSSql.change_ticket_collector(req['ticketId'], req['collectorId'], request.userJWT)
+    
+    return make_response(response)
+
+
+# TODO
+@app.route("/get-user-information", methods=['GET'])
+def get_user_information():
+    # Return name, lastname and image of user
     pass
 
 
