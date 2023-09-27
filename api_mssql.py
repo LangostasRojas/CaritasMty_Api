@@ -243,7 +243,6 @@ def change_ticket_collector():
     
     return make_response(response)
 
-
 # TODO - crear ruta para ver informacion especifica de un ticket (App Manager)
 # Ver datos especificos de un ticket (App Manager)
 # Regresa - idRecolector, idTicket, importe, nombre (donante), direccion, comentario, estatus (mismo subqueries que tiene get-collector-daily-information)
