@@ -54,7 +54,7 @@ CREATE TABLE LOGS(
     ipAddress VARCHAR(20) NOT NULL,
     userAgent VARCHAR(255) NOT NULL,
     method VARCHAR(10) NOT NULL,
-    path VARCHAR(255) NOT NULL,
+    path VARCHAR(max) NOT NULL,
     responseCode VARCHAR(3) NOT NULL,
     fecha DATETIME NOT NULL,
     token VARCHAR(255) NULL,
