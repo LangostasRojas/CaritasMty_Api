@@ -607,8 +607,82 @@ def change_ticket_collector(ticket_id, new_collector_id, jwt_payload):
 
 
 # TODO
-def mark_visit(ticket_id, jwt_payload):
-    pass
+def mark_visit(ticket_id,status, jwt_payload):    
+    try:
+        # Verify that ticket_id is an INT
+        try: ticket_id = int(ticket_id)
+        except Exception as e: return {'error': 'Ticket no valido'}, 406
+
+        def get_collector_id(ticket_id):
+            global cnx, mssql_params
+            query_get_id = """
+                        SELECT u.idUsuario AS idRecolector, b.idBitacora AS ticketId
+                        FROM USUARIOS u
+                        JOIN BITACORA b ON u.idUsuario = b.idRecolector
+                        WHERE b.idBitacora = %s;
+                        """
+
+            # Obtener datos para ver si es dueño del ticket
+            try:
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query_get_id, (ticket_id, ))
+            except pymssql._pymssql.InterfaceError:
+                print("La langosta se esta conectando...")
+                cnx = mssql_connect(mssql_params)
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query_get_id, (ticket_id, ))
+            
+            result = cursor.fetchall()
+            cursor.close()
+            return result
+        
+        try:
+            result = get_collector_id(ticket_id)
+        except Exception as e:
+            raise TypeError("Error al cambiar estatus de ticket: %s" % e)
+
+        # Verificar si el ticket existe
+        if len(result) == 0:
+            return {'error': 'Ticket no encontrado'}, 404
+        # Verificar que el recolector sea dueño del ticket
+        if result[0]['idRecolector'] != jwt_payload['userId']:
+            return {'error': 'Acceso no autorizado'}, 401
+        
+        
+        def update_status(ticket_id, status):
+            global cnx, mssql_params
+
+            if(status not in [0,1,2]):
+                return {'error': 'Status no correcto' }
+
+            query_update = """
+                        UPDATE BITACORA
+                        SET estatusVisita = %s
+                        Where idBitacora = %s;
+                        """
+            # Actualizar ticket a completado (recolectado)
+            try:
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query_update, (status, ticket_id, ))
+                cnx.commit()  # Commit the changes to the database
+                cursor.close()
+            except pymssql._pymssql.InterfaceError:
+                print("La langosta se esta conectando...")
+                cnx = mssql_connect(mssql_params)
+                cursor = cnx.cursor(as_dict=True)
+                cursor.execute(query_update, (status, ticket_id, ))
+                cnx.commit()  # Commit the changes to the database
+                cursor.close()
+        try:
+            update_status(ticket_id,status)
+        except Exception as e:
+            return {'error': f'Error al insertar cambiar status {e} ' }, 400
+
+        return {'completado': f'Status cambiado para el ticket {ticket_id}'}
+        
+    except Exception as e:
+        return {'Error al insertar comentario'}, 400
+
 
 
 # TODO
@@ -683,7 +757,7 @@ def set_comment(ticket_id,comment, jwt_payload):
         return {'completado': f'Comentario ananido en Ticket {ticket_id}'}
         
     except Exception as e:
-        return {'Error al insertar ticket'}, 400
+        return {'Error al insertar comentario'}, 400
 
 
 # TODO

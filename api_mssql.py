@@ -165,12 +165,13 @@ def mark_visit():
     req = request.json
 
     # Checar que se proporciono el id del ticket y estatus (0: pendiente, 1: en camino, 2: visitado)
-    if 'ticketId' not in req:
+    if 'ticketId' not in req or 'status' not in req:
         return make_response({'error': 'Bad request'}, 400)
 
     ticket_id = req['ticketId']
+    status = req['status']
 
-    response = MSSql.mark_visit(ticket_id, request.userJWT)
+    response = MSSql.mark_visit(ticket_id,status,request.userJWT)
 
     return make_response(response)
 
