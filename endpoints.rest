@@ -1,0 +1,12 @@
+# Login 
+POST http://127.0.0.1:10201/sign-in
+Content-Type: application/json
+
+{
+    "username": "user2" ,
+    "password": "12345678"
+    
+}
+###
+GET http://127.0.0.1:10201/get-recolector-tickets?userId=2
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInVzZXJOYW1lIjoidXNlcjIiLCJyb2xlIjoicmVwYXJ0aWRvciIsImV4cCI6MTY5NDIxMDQ2OH0.v5WGrPs759UNSdGUM4GJu8vKCMBILciP9YGXgBUKgz4

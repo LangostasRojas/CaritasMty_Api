@@ -2,11 +2,11 @@ import pymssql
 import bcrypt
 import jwt
 import datetime
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import os
 
 # Cargar variables de entorno
-load_dotenv()
+load_dotenv(find_dotenv())
 cnx = None
 mssql_params = {}
 ACCESS_TOKEN_KEY = os.getenv('ACCESS_TOKEN_KEY')
