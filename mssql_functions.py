@@ -99,7 +99,7 @@ def sign_in(username, password):
 def get_collector_tickets(user_id, jwt_payload):
     global cnx, mssql_params
     query = """
-            SELECT b.idBitacora AS idTicket, b.importe AS importe, d.nombre + ' ' + d.apellidoPaterno AS nombre, d.direccion
+            SELECT b.idBitacora AS idTicket, b.importe AS importe, d.nombre + ' ' + d.apellidoPaterno AS nombre, d.direccion, b.estatusVisita
             FROM USUARIOS u
             JOIN BITACORA b ON b.idRecolector = u.idUsuario
             JOIN DONANTES d ON d.idDonante = b.idDonante
