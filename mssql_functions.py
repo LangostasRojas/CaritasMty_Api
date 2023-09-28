@@ -126,7 +126,6 @@ def get_collector_tickets(user_id, jwt_payload):
 
         result = cursor.fetchall()
         cursor.close()
-        
         return result
 
     except Exception as e:
@@ -217,7 +216,7 @@ def complete_ticket(ticket_id, payment_status, jwt_payload):
             global cnx, mssql_params
             query_update = """
                         UPDATE BITACORA
-                        SET fechaVisita = GETDATE(), estatusPago = %s, estatusVisita = 1
+                        SET fechaVisita = GETDATE(), estatusPago = %s, estatusVisita = 2
                         WHERE idBitacora = %s;
                         """
 
@@ -235,7 +234,7 @@ def complete_ticket(ticket_id, payment_status, jwt_payload):
                 cnx.commit()  # Commit the changes to the database
                 cursor.close()
         try:
-            update_ticket(ticket_id)
+            update_ticket(ticket_id, payment_status)
         except Exception as e:
             return {'error': 'Error al actualizar ticket'}, 400
 
@@ -392,7 +391,7 @@ def get_manager_collectors(jwt_payload):
         
         def get_collectors_id(manager_id):
             global cnx, mssql_params
-            query = "SELECT idUsuario FROM USUARIOS WHERE idEncargado = %s;"
+            query = "SELECT nombre + ' ' + apellidoPaterno AS nombre, idUsuario FROM USUARIOS WHERE idEncargado = %s;"
 
             # Obtener datos del recolector para ese dia
             try:
@@ -416,7 +415,7 @@ def get_manager_collectors(jwt_payload):
         def get_collector_information(collector_id):
             global cnx, mssql_params
             query = """
-                    SELECT b.idRecolector AS idRecolector, b.idBitacora AS idTicket, b.importe, d.nombre + ' ' + d.apellidoPaterno nombre, d.direccion, b.estatusVisita AS estatus
+                    SELECT b.idBitacora AS idTicket, b.importe, d.nombre + ' ' + d.apellidoPaterno nombre, d.direccion, b.estatusVisita AS estatus
                     FROM USUARIOS u
                     JOIN BITACORA b ON u.idUsuario = b.idRecolector
                     JOIN DONANTES d ON b.idDonante = d.idDonante
@@ -448,9 +447,18 @@ def get_manager_collectors(jwt_payload):
         resultado = []
         try:
             for collector in collectors_id:
-                resultado.append(get_collector_information(collector['idUsuario']))                
+                temp = {}
+                # resultado.append(get_collector_information(collector['idUsuario']))
+                temp['recolectorId'] = collector['idUsuario']
+                temp['nombre'] = collector['nombre']
+                temp['tickets'] = get_collector_information(collector['idUsuario'])
+                temp['numTickets'] = len(temp['tickets'])
+
+                if len(temp['tickets']) == 0:
+                    continue
+                resultado.append(temp)
         except Exception as e:
-            return {'error': 'Error obteniendo datos del recolector'}, 400
+            return {'error': 'Error obteniendo datos del recolectora'}, 400
         
         if len(resultado) == 0:
             # TODO cambiar mensaje a JSON
@@ -468,26 +476,30 @@ def get_list_collectors(jwt_payload):
         if jwt_payload['role'] != "manager":
             return {'error': 'Acceso no autorizado'}, 401
         
-        def get_collectors():
+        def get_collectors(manager_id):
             global cnx, mssql_params
-            query = "SELECT nombre + ' ' + apellidoPaterno AS nombre, idUsuario AS recolectorId FROM USUARIOS"
+            query = """
+                    SELECT nombre + ' ' + apellidoPaterno AS nombre, idUsuario AS recolectorId 
+                    FROM USUARIOS
+                    WHERE idEncargado = %s
+                    """
 
             # Obtener datos del recolector para ese dia
             try:
                 cursor = cnx.cursor(as_dict=True)
-                cursor.execute(query)
+                cursor.execute(query, (manager_id, ))
             except pymssql._pymssql.InterfaceError:
                 print("La langosta se esta conectando...")
                 cnx = mssql_connect(mssql_params)
                 cursor = cnx.cursor(as_dict=True)
-                cursor.execute(query)
+                cursor.execute(query, (manager_id, ))
                 
             result = cursor.fetchall()
             cursor.close()
             return result
         
         try:
-            result = get_collectors()
+            result = get_collectors(jwt_payload['userId'])
         except Exception as e:
             return {'error': 'Error obteniendo el listado de recolectores'}, 400
         
@@ -607,10 +619,12 @@ def change_ticket_collector(ticket_id, new_collector_id, jwt_payload):
 
 
 # TODO
-def mark_visit(ticket_id,status, jwt_payload):    
+def mark_visit(ticket_id, status, jwt_payload):    
     try:
         # Verify that ticket_id is an INT
-        try: ticket_id = int(ticket_id)
+        try: 
+            ticket_id = int(ticket_id)
+            status = int(status)
         except Exception as e: return {'error': 'Ticket no valido'}, 406
 
         def get_collector_id(ticket_id):
