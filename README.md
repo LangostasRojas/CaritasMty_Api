@@ -14,7 +14,7 @@ Esta es una API construida con Flask que se conecta a una base de datos SQL Serv
 2. Instala las dependencias usando pip:
 
 ```bash
-pip install Flask
+pip install flask
 pip install python-dotenv
 pip install pyjwt
 pip install pymssql
