@@ -88,7 +88,13 @@ INSERT INTO DONANTES (nombre, apellidoPaterno, apellidoMaterno, email, direccion
 VALUES 
 ('Roberto', 'Gomez', 'Lopez', 'roberto@gmail.com', 'Calle 123', 123456789, 987654321, 'M'),
 ('Laura', 'Rodriguez', 'Gonzalez', 'laura@gmail.com', 'Av. Principal', NULL, 789456123, 'F'),
-('Javier', 'Martinez', 'Perez', 'javier@gmail.com', 'Calle 456', 456123789, NULL, 'M');
+('Javier', 'Martinez', 'Perez', 'javier@gmail.com', 'Calle 456', 456123789, NULL, 'M'),
+('María', 'Hernandez', 'Gomez', 'maria@gmail.com', 'Calle 789', 987654321, NULL, 'F'),
+('Carlos', 'Lopez', 'Gutierrez', 'carlos@gmail.com', 'Av. Secundaria', NULL, 321654987, 'M'),
+('Alejandra', 'Sanchez', 'Martinez', 'alejandra.sanchez@gmail.com', 'Calle 303', 123456789, 987654321, 'F'),
+('Eduardo', 'Lopez', 'Gonzalez', 'eduardo.lopez@gmail.com', 'Av. Independencia', NULL, 789456123, 'M'),
+('Isabel', 'Garcia', 'Hernandez', 'isabel.garcia@gmail.com', 'Calle 404', 456123789, NULL, 'F'),
+('Diego', 'Fernandez', 'Ramirez', 'diego.fernandez@gmail.com', 'Av. Revolución', NULL, 321654987, 'M');
 GO
 
 -- Inserts para la tabla BITACORA
@@ -97,16 +103,40 @@ VALUES
 (1, 3, 123.00, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
 (2, 4, 79.15, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
 (3, 5, 721.79, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
-(1, 3, 156.00, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
-(2, 4, 128.99, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
-(3, 4, 999.99, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
-(1, 3, 123.00, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
-(2, 4, 79.15, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
-(3, 5, 721.79, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
-(1, 3, 156.00, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
-(2, 4, 128.99, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
-(3, 4, 999.99, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL);
-
+(4, 6, 234.50, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(5, 3, 89.25, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(6, 4, 324.10, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(7, 5, 453.75, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(8, 6, 567.80, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(9, 3, 132.40, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(1, 4, 189.30, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(2, 5, 298.60, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(3, 6, 456.70, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(4, 3, 134.25, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(5, 4, 239.50, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(6, 5, 342.70, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(7, 6, 456.90, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(8, 3, 567.10, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(9, 4, 789.30, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(1, 5, 890.45, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
+(2, 6, 1234.60, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL);
+GO
 -- Modificar la fecha de cobro
 -- UPDATE BITACORA
 -- SET fechaCobro = CONVERT(DATE, GETDATE())
+
+-- SELECT * FROM BITACORA
+-- SELECT * FROM DONANTES
+CREATE TRIGGER NoActualizarNombres
+ON DONANTES
+AFTER UPDATE
+AS
+BEGIN
+    IF UPDATE(nombre) OR UPDATE(apellidoPaterno) OR UPDATE (apellidoMaterno)
+    BEGIN
+        RAISERROR('No puedes actualizar el nombre', 16, 1)
+        ROLLBACK TRANSACTION
+    END
+END;
+GO
+ALTER TABLE DONANTES ENABLE TRIGGER NoActualizarNombres;
