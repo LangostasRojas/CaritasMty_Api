@@ -40,3 +40,10 @@ Para iniciar la API, ejecuta el siguiente comando:
 python api_mssql.py
 ```
 
+## Equipo 2 - Langostas
+
+- Rodrigo Reyes Gómez      A01284917
+- Diego García Minjares    A01284650
+- Daniel Eugenio Morales   A01284684
+- Jair Santos Gutiérrez    A01026654
+- Kraken Domínguez         A00833278
