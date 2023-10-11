@@ -5,7 +5,7 @@ Esta es una API construida con Flask que se conecta a una base de datos SQL Serv
 ## Requisitos
 
 - Python 3.x
-- Paquetes Python: Flask, python-dotenv, pyjwt, pymssql, bcrypt
+- Paquetes Python: Flask, python-dotenv, pyjwt, pymssql, bcrypt, requests
 
 ## Configuración
 

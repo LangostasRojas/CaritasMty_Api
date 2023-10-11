@@ -3,3 +3,4 @@ python-dotenv
 pyjwt
 pymssql
 bcrypt
+requests

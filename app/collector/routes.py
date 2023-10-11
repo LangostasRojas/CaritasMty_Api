@@ -3,7 +3,7 @@ import sys
 
 from app import app, CNX
 from app.collector import controllers
-from app.middleware.middleware import exclude_middleware
+from app. middleware.middleware import  exclude_middleware
 
 controllers.cnx = CNX
 
@@ -92,10 +92,27 @@ def set_comment():
 
     return make_response(response)
 
+
 # Enviar lista de comentarios disponibles (App Recolector)
 # Regresa (json) - idComentario, comentario
-@app.route("/list-comments", methods=['GET'])
+@exclude_middleware
+@app.route("/get-list-comments", methods=['GET'])
 def list_comments():
     response = controllers.list_comments()
+
+    return make_response(response)
+
+
+# Enviar lista de comentarios disponibles (App Recolector)
+# Regresa (json) - idComentario, comentario
+@app.route("/get-geolocation", methods=['GET'])
+def get_ticket_geolocation():
+    # Checar que se proporciono el id del ticket
+    if 'ticketId' not in request.args:
+        return make_response({'error': 'Bad request'}, 400)
+
+    ticket_id = request.args.get('ticketId')
+
+    response = controllers.get_ticket_geolocation(ticket_id, request.userJWT)
 
     return make_response(response)

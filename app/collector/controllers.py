@@ -1,5 +1,7 @@
 from app.config.mssql import mssql_connect
 import pymssql
+import requests
+from app import GOOGLE_MAPS_API_KEY
 
 def get_collector_tickets(user_id, jwt_payload):
     global cnx, mssql_params
@@ -40,7 +42,7 @@ def get_collector_tickets(user_id, jwt_payload):
 def get_ticket_information(ticket_id, jwt_payload):
     global cnx, mssql_params
     query = """
-            SELECT b.idRecolector AS idRecolector, b.idBitacora AS idTicket, b.importe, d.nombre + ' ' + d.apellidoPaterno nombre, d.direccion
+            SELECT b.idRecolector AS idRecolector, b.idBitacora AS idTicket, b.importe, d.nombre + ' ' + d.apellidoPaterno nombre, d.direccion + ', ' + CONVERT(VARCHAR, d.codigoPostal) + ', ' + d.municipio AS direccion
             FROM USUARIOS u
             JOIN BITACORA b ON u.idUsuario = b.idRecolector
             JOIN DONANTES d ON b.idDonante = d.idDonante
@@ -218,7 +220,7 @@ def mark_visit(ticket_id, status, jwt_payload):
                 cnx.commit()  # Commit the changes to the database
                 cursor.close()
         try:
-            update_status(ticket_id,status)
+            update_status(ticket_id, status)
         except Exception as e:
             return {'error': f'Error al insertar cambiar status {e} ' }, 400
 
@@ -229,10 +231,12 @@ def mark_visit(ticket_id, status, jwt_payload):
     
 
 # TODO
-def set_comment(ticket_id,comment, jwt_payload):    
+def set_comment(ticket_id, comment_id, jwt_payload):    
     try:
-        # Verify that ticket_id is an INT
-        try: ticket_id = int(ticket_id)
+        # Verify that ticket_id and comment is an INT
+        try: 
+            ticket_id = int(ticket_id)
+            comment_id = int(comment_id)
         except Exception as e: return {'error': 'Ticket no valido'}, 406
 
         def get_collector_id(ticket_id):
@@ -293,11 +297,77 @@ def set_comment(ticket_id,comment, jwt_payload):
                 cnx.commit()  # Commit the changes to the database
                 cursor.close()
         try:
-            update_comment(ticket_id,comment)
+            update_comment(ticket_id, comment_id)
         except Exception as e:
             return {'error': f'Error al insertar comentaro {e} ' }, 400
 
-        return {'completado': f'Comentario ananido en Ticket {ticket_id}'}
+        return {'completado': f'Comentario añanido en Ticket {ticket_id}'}
         
     except Exception as e:
         return {'Error al insertar comentario'}, 400
+
+
+def list_comments():
+    try:        
+        global cnx, mssql_params
+
+        query = "SELECT idComentario AS id, comentario AS comment FROM COMENTARIOS"
+
+        # Obtener datos para ver si es dueño del ticket
+        try:
+            cursor = cnx.cursor(as_dict=True)
+            cursor.execute(query)
+        except pymssql._pymssql.InterfaceError:
+            print("La langosta se esta conectando...")
+            cnx = mssql_connect(mssql_params)
+            cursor = cnx.cursor(as_dict=True)
+            cursor.execute(query)
+        
+        result = cursor.fetchall()
+        cursor.close()
+        return result
+        
+    except Exception as e:
+        return {'Error al obtener la lista de comentarios'}, 400
+    
+
+def get_ticket_geolocation(ticket_id, jwt_payload):
+    try:        
+        global cnx, mssql_params
+
+        query = """
+                SELECT b.idRecolector, d.direccion AS direccion
+                FROM BITACORA b
+                JOIN DONANTES d ON b.idDonante = d.idDonante
+                WHERE b.idBitacora = %s;
+                """
+
+        # Obtener datos para ver si es dueño del ticket
+        try:
+            cursor = cnx.cursor(as_dict=True)
+            cursor.execute(query, (ticket_id, ))
+        except pymssql._pymssql.InterfaceError:
+            print("La langosta se esta conectando...")
+            cnx = mssql_connect(mssql_params, (ticket_id, ))
+            cursor = cnx.cursor(as_dict=True)
+            cursor.execute(query)
+        
+        result = cursor.fetchall()
+        cursor.close()
+
+        # Verificar si el ticket existe
+        if len(result) == 0:
+            return {'error': 'Ticket no encontrado'}, 404
+        # Verificar que el recolector sea dueño del ticket
+        if result[0]['idRecolector'] != jwt_payload['userId']:
+            return {'error': 'Acceso no autorizado'}, 401
+        
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36'}
+        location = requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address=Av.%20Eugenio%20Garza%20Sada%202501%20Sur,%20Tecnol%C3%B3gico&key={GOOGLE_MAPS_API_KEY}", headers=headers)
+
+        print(f"https://maps.googleapis.com/maps/api/geocode/json?address=Av.%20Eugenio%20Garza%20Sada%202501%20Sur,%20Tecnol%C3%B3gico&key={GOOGLE_MAPS_API_KEY}")
+
+        return location.json()
+        
+    except Exception as e:
+        return {'Error al obtener la lista de comentarios'}, 400

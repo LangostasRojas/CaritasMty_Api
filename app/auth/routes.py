@@ -6,12 +6,6 @@ from app.auth import controllers
 from app.middleware.middleware import exclude_middleware
 
 controllers.cnx = CNX
-# try:
-#     controllers.cnx = controllers.mssql_connect(mssql_params)
-#     print("Connected to mssql server!")
-# except Exception as e:
-#     print("Cannot connect to mssql server!: {}".format(e))
-#     sys.exit()
 
 auth_bp = Blueprint('auth', __name__)
 

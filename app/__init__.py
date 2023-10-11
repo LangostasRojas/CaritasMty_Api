@@ -14,6 +14,7 @@ mssql_params['DB_USER'] = os.getenv('DB_USER')
 mssql_params['DB_PASSWORD'] = os.getenv('DB_PASSWORD')
 ACCESS_TOKEN_KEY = os.getenv('ACCESS_TOKEN_KEY')
 REFRESH_TOKEN_KEY = os.getenv('REFRESH_TOKEN_KEY')
+GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 
 try:
     CNX = mssql_connect(mssql_params)

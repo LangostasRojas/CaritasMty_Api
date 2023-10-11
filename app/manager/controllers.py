@@ -190,7 +190,7 @@ def get_manager_collectors(jwt_payload):
         def get_collector_information(collector_id):
             global cnx, mssql_params
             query = """
-                    SELECT b.idBitacora AS idTicket, b.importe, d.nombre + ' ' + d.apellidoPaterno nombre, d.direccion, b.estatusVisita AS estatus
+                    SELECT b.idBitacora AS idTicket, b.importe, d.nombre + ' ' + d.apellidoPaterno nombre, d.direccion + ', ' + CONVERT(VARCHAR, d.codigoPostal) + ', ' + d.municipio AS direccion, b.estatusVisita AS estatus, b.estatusPago AS estatusPago
                     FROM USUARIOS u
                     JOIN BITACORA b ON u.idUsuario = b.idRecolector
                     JOIN DONANTES d ON b.idDonante = d.idDonante
@@ -213,9 +213,10 @@ def get_manager_collectors(jwt_payload):
             # Cambiar estatus de recoleccion a texto
             if len(result) != 0:
                 for ticket in result:
+                    # if ticket['estatusPago'] != None and ticket['estatusPago'] == 2: ticket['estatusPago'] = 'No recolectado'
                     if ticket['estatus'] == 0: ticket['estatus'] = 'Sin Empezar'
                     elif ticket['estatus'] == 1: ticket['estatus'] = 'En Ruta'
-                    else: ticket['estatus'] = 'Completado'
+                    else: ticket['estatus'] = 'Recolectado'
 
             return result
         
