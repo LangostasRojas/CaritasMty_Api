@@ -30,6 +30,7 @@ DB_USER=DB_USER
 DB_PASSWORD=DB_PASSWORD
 ACCESS_TOKEN_KEY=ACCESS_TOKEN_KEY
 REFRESH_TOKEN_KEY=REFRESH_TOKEN_KEY
+GOOGLE_MAPS_API_KEY
 ```
 
 ## Ejecución
@@ -39,6 +40,9 @@ Para iniciar la API, ejecuta el siguiente comando:
 ```bash
 python api_mssql.py
 ```
+
+## Documentación API
+https://documenter.getpostman.com/view/29623799/2s9YC1WEFB
 
 ## Equipo 2 - Langostas
 

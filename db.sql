@@ -27,10 +27,18 @@ CREATE TABLE DONANTES (
 	apellidoMaterno VARCHAR(15) NOT NULL,
     email VARCHAR(50) NOT NULL,
   	direccion VARCHAR (100) NOT NULL,
+    municipio VARCHAR(30) NOT NULL,
+    codigoPostal INT NULL,
     telCasa INT NULL,
     telMovil INT NULL,
     genero CHAR(1) NOT NULL,
     PRIMARY KEY(idDonante)
+)
+
+CREATE TABLE COMENTARIOS(
+    idComentario INT IDENTITY(1, 1) NOT NULL,
+    comentario VARCHAR(50) NOT NULL,
+    PRIMARY KEY(idComentario)
 )
 
 CREATE TABLE BITACORA(
@@ -43,10 +51,11 @@ CREATE TABLE BITACORA(
     fechaVisita DATETIME NULL,
     estatusPago TINYINT NOT NULL,
 	estatusVisita TINYINT NOT NULL,
-    comentarios VARCHAR(max) NULL,
+    comentarios INT,
     PRIMARY KEY(idBitacora),
     FOREIGN KEY(idDonante) REFERENCES DONANTES(idDonante),
-    FOREIGN KEY(idRecolector) REFERENCES USUARIOS(idUsuario)
+    FOREIGN KEY(idRecolector) REFERENCES USUARIOS(idUsuario),
+    FOREIGN KEY(comentarios) REFERENCES COMENTARIOS(idComentario)
 )
 
 CREATE TABLE LOGS(
@@ -84,17 +93,17 @@ VALUES
 GO
 
 -- Inserts para la tabla DONANTES
-INSERT INTO DONANTES (nombre, apellidoPaterno, apellidoMaterno, email, direccion, telCasa, telMovil, genero)
+INSERT INTO DONANTES (nombre, apellidoPaterno, apellidoMaterno, email, direccion, municipio, codigoPostal, telCasa, telMovil, genero)
 VALUES 
-('Roberto', 'Gomez', 'Lopez', 'roberto@gmail.com', 'Calle 123', 123456789, 987654321, 'M'),
-('Laura', 'Rodriguez', 'Gonzalez', 'laura@gmail.com', 'Av. Principal', NULL, 789456123, 'F'),
-('Javier', 'Martinez', 'Perez', 'javier@gmail.com', 'Calle 456', 456123789, NULL, 'M'),
-('María', 'Hernandez', 'Gomez', 'maria@gmail.com', 'Calle 789', 987654321, NULL, 'F'),
-('Carlos', 'Lopez', 'Gutierrez', 'carlos@gmail.com', 'Av. Secundaria', NULL, 321654987, 'M'),
-('Alejandra', 'Sanchez', 'Martinez', 'alejandra.sanchez@gmail.com', 'Calle 303', 123456789, 987654321, 'F'),
-('Eduardo', 'Lopez', 'Gonzalez', 'eduardo.lopez@gmail.com', 'Av. Independencia', NULL, 789456123, 'M'),
-('Isabel', 'Garcia', 'Hernandez', 'isabel.garcia@gmail.com', 'Calle 404', 456123789, NULL, 'F'),
-('Diego', 'Fernandez', 'Ramirez', 'diego.fernandez@gmail.com', 'Av. Revolución', NULL, 321654987, 'M');
+('Roberto', 'Gomez', 'Lopez', 'roberto@gmail.com', 'Av. Eugenio Garza Sada 2501 Sur, Tecnológico', 'Monterrey', 64849, 123456789, 987654321, 'M'),
+('Laura', 'Rodriguez', 'Gonzalez', 'laura@gmail.com', 'Dinamarca 451, Del Carmen', 'Monterrey', 64710 , NULL, 789456123, 'F'),
+('Javier', 'Martinez', 'Perez', 'javier@gmail.com', 'Puerto Topolobampo 4603, Colinia Valle de, Las Brisas', 'Monterrey', 64790, 456123789, NULL, 'M'),
+('María', 'Hernandez', 'Gomez', 'maria@gmail.com', 'Carretera Nacional km 267.7 Colonia, La Estanzuela', 'Monterrey', 64986, 987654321, NULL, 'F'),
+('Carlos', 'Lopez', 'Gutierrez', 'carlos@gmail.com', 'Lince 1000, Cumbres Elite, Sector Villas', 'Monterrey', 64349, NULL, 321654987, 'M'),
+('Alejandra', 'Sanchez', 'Martinez', 'alejandra.sanchez@gmail.com', 'Av. Dr. Ignacio Morones Prieto 290, Sin Nombre de Col 11', 'Santa Catarina', 66180, 123456789, 987654321, 'F'),
+('Eduardo', 'Lopez', 'Gonzalez', 'eduardo.lopez@gmail.com', 'Av. Pablo Livas 2011, La Pastora', 'Guadalupe', 67140, NULL, 789456123, 'M'),
+('Isabel', 'Garcia', 'Hernandez', 'isabel.garcia@gmail.com', 'Niños Héroes, Ciudad Universitaria', 'San Nicolás de los Garza', 66451, 456123789, NULL, 'F'),
+('Diego', 'Fernandez', 'Ramirez', 'diego.fernandez@gmail.com', 'Av Eloy Cavazos, Jardines de La Pastora', 'Guadalupe', 67140, NULL, 321654987, 'M');
 GO
 
 -- Inserts para la tabla BITACORA
@@ -121,6 +130,19 @@ VALUES
 (1, 5, 890.45, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL),
 (2, 6, 1234.60, CONVERT(DATE, GETDATE()), NULL, 0, 0, NULL);
 GO
+
+
+INSERT INTO COMENTARIOS (comentario)
+VALUES
+('comentario 1'),
+('comentario 2'),
+('comentario 3'),
+('comentario 4'),
+('comentario 5'),
+('comentario 6');
+GO
+
+
 -- Modificar la fecha de cobro
 -- UPDATE BITACORA
 -- SET fechaCobro = CONVERT(DATE, GETDATE())
