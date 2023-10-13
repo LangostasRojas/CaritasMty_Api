@@ -11,7 +11,7 @@ def get_list_collectors(jwt_payload):
         def get_collectors(manager_id):
             global cnx, mssql_params
             query = """
-                    SELECT nombre + ' ' + apellidoPaterno AS nombre, idUsuario AS recolectorId 
+                    SELECT nombre + ' ' + apellidoPaterno AS nombre, idUsuario AS id 
                     FROM USUARIOS
                     WHERE idEncargado = %s
                     """

@@ -43,7 +43,7 @@ def get_report_information(jwt_payload):
 def get_zone_donations(jwt_payload):
     global cnx, mssql_params
     query = """
-            SELECT d.municipio, ROUND(SUM(importe), 2) AS ingresos
+            SELECT ROW_NUMBER() OVER (ORDER BY d.municipio) AS id, d.municipio, ROUND(SUM(importe), 2) AS ingresos
             FROM BITACORA b
             JOIN DONANTES d ON b.idDonante = d.idDonante
             GROUP BY d.municipio
@@ -75,9 +75,7 @@ def get_zone_donations(jwt_payload):
 def get_completion_rate(jwt_payload):
     global cnx, mssql_params
     query = """
-            SELECT COUNT(*) AS total, (SELECT COUNT(*)
-                                       FROM BITACORA
-                                       WHERE estatusPago = 1) AS recolectado
+            SELECT COUNT(*) AS total, (SELECT COUNT(*) FROM BITACORA WHERE estatusPago = 1) AS recolectado
             FROM BITACORA
             """
     try:
@@ -109,7 +107,7 @@ def get_completion_rate(jwt_payload):
 def get_zone_donations(jwt_payload):
     global cnx, mssql_params
     query = """
-            SELECT d.municipio, ROUND(SUM(importe), 2) AS ingresos
+            SELECT ROW_NUMBER() OVER (ORDER BY d.municipio) AS id, d.municipio, ROUND(SUM(importe), 2) AS ingresos
             FROM BITACORA b
             JOIN DONANTES d ON b.idDonante = d.idDonante
             GROUP BY d.municipio
@@ -141,13 +139,12 @@ def get_zone_donations(jwt_payload):
 def get_average_tickets(jwt_payload):
     global cnx, mssql_params
     query = """ 
-            SELECT COUNT(*) AS total, (SELECT COUNT(*)
-                                       FROM BITACORA
-                                       WHERE estatusPago = 1) AS recolectado,
+            SELECT ROW_NUMBER() OVER (ORDER BY CONVERT(DATE, fechaCobro)) AS id, COUNT(*) AS total, 
+                    (SELECT COUNT(*) FROM BITACORA WHERE estatusPago = 1) AS recolectado,
                     CONVERT(DATE, fechaCobro) as fecha
             FROM BITACORA
             WHERE fechaCobro >= CONVERT(DATE, GETDATE() - 7)
-            GROUP BY CONVERT(DATE, fechaCobro)
+            GROUP BY CONVERT(DATE, fechaCobro);
             """
     try:
         if jwt_payload['role'] != 'manager':
@@ -207,7 +204,8 @@ def get_expected_donations(jwt_payload):
 def get_completion_rate_by_collector(jwt_payload):
     global cnx, mssql_params
     query = """
-            SELECT u.nombre + ' ' + u.apellidoPaterno AS nombre, COUNT(*) AS total, r.recolectado
+            SELECT ROW_NUMBER() OVER (ORDER BY u.nombre + ' ' + u.apellidoPaterno, r.recolectado) AS id, 
+                   u.nombre + ' ' + u.apellidoPaterno AS nombre, COUNT(*) AS total, r.recolectado
             FROM BITACORA b
             JOIN USUARIOS u ON b.idRecolector = u.idUsuario
             JOIN (
