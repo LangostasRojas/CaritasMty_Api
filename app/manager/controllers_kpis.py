@@ -75,8 +75,12 @@ def get_zone_donations(jwt_payload):
 def get_completion_rate(jwt_payload):
     global cnx, mssql_params
     query = """
-            SELECT COUNT(*) AS total, (SELECT COUNT(*) FROM BITACORA WHERE estatusPago = 1) AS recolectado
+            SELECT COUNT(*) AS total, 
+                (SELECT COUNT(*) 
+                FROM BITACORA 
+                WHERE estatusPago = 1 AND CONVERT(DATE, fechaCobro) = CONVERT(DATE, GETDATE()))  AS recolectado
             FROM BITACORA
+            WHERE CONVERT(DATE, fechaCobro) = CONVERT(DATE, GETDATE())
             """
     try:
         if jwt_payload['role'] != 'manager':
@@ -233,6 +237,64 @@ def get_completion_rate_by_collector(jwt_payload):
 
         for res in result:
             res['porcentaje'] = int(res['recolectado'] / res['total'] * 100)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return {'Error al obtener datos de ticket'}, 401
+    
+
+def get_collected_tickets_c_month(jwt_payload):
+    global cnx, mssql_params
+    query = """
+            SELECT COUNT(*) AS recolectados
+            FROM BITACORA
+            WHERE MONTH(fechaCobro) >= MONTH(GETDATE())
+            """
+    try:
+        if jwt_payload['role'] != 'manager':
+            return {'error': 'Acceso no autorizado'}, 401
+        try:
+            cursor = cnx.cursor(as_dict=True)
+            cursor.execute(query, )
+        except pymssql._pymssql.InterfaceError:
+            print("La langosta se esta conectando...")
+            cnx = mssql_connect(mssql_params)
+            cursor = cnx.cursor(as_dict=True)
+            cursor.execute(query, )
+        
+        result = cursor.fetchall()
+        cursor.close()
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return {'Error al obtener datos de ticket'}, 401
+    
+
+def get_collected_tickets_month(jwt_payload):
+    global cnx, mssql_params
+    query = """
+            SET LANGUAGE SPANISH;
+            SELECT COUNT(*) AS total, DATENAME(MONTH, fechaCobro) AS mes, 
+                (SELECT COUNT(*) FROM BITACORA WHERE estatusPago = 1 GROUP BY DATENAME(MONTH, fechaCobro)) AS           recolectado
+            FROM BITACORA
+            GROUP BY DATENAME(MONTH, fechaCobro);
+            """
+    try:
+        if jwt_payload['role'] != 'manager':
+            return {'error': 'Acceso no autorizado'}, 401
+        try:
+            cursor = cnx.cursor(as_dict=True)
+            cursor.execute(query, )
+        except pymssql._pymssql.InterfaceError:
+            print("La langosta se esta conectando...")
+            cnx = mssql_connect(mssql_params)
+            cursor = cnx.cursor(as_dict=True)
+            cursor.execute(query, )
+        
+        result = cursor.fetchall()
+        cursor.close()
         
         return jsonify(result)
         

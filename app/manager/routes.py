@@ -127,3 +127,17 @@ def get_completion_rate_by_collector():
     response = controllers_kpis.get_completion_rate_by_collector(request.userJWT)
 
     return make_response(response)
+
+
+@app.route("/get-collected-tickets-current-month", methods=['GET'])
+def get_collected_tickets_c_month():
+    response = controllers_kpis.get_collected_tickets_c_month(request.userJWT)
+
+    return make_response(response)
+
+
+@app.route("/get-collected-tickets-month", methods=['GET'])
+def get_collected_tickets_month():
+    response = controllers_kpis.get_collected_tickets_month(request.userJWT)
+
+    return make_response(response)
