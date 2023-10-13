@@ -1,3 +1,4 @@
+from flask import jsonify
 from app.config.mssql import mssql_connect
 import pymssql
 
@@ -38,7 +39,7 @@ def get_list_collectors(jwt_payload):
             # TODO cambiar mensaje a JSON
             return "No hay recolectores que mostrar"
 
-        return result
+        return jsonify(result)
         
     except Exception as e:
         return {'Error obtener listado de recolectores'}, 400
@@ -152,7 +153,7 @@ def get_collector_daily_information(collector_id, jwt_payload):
         elif result[0]['estatusVisita'] == 'En Ruta': resultado['estatus'] = 'En Ruta'
         else: resultado['estatus'] = 'Sin Empezar'
 
-        return resultado
+        return jsonify(resultado)
         
     except Exception as e:
         return {'Error al obtener los datos del recolector para el dia de hoy'}, 400
@@ -194,7 +195,7 @@ def get_manager_collectors(jwt_payload):
                     FROM USUARIOS u
                     JOIN BITACORA b ON u.idUsuario = b.idRecolector
                     JOIN DONANTES d ON b.idDonante = d.idDonante
-                    WHERE b.idRecolector = %s;
+                    WHERE b.idRecolector = %s AND CONVERT(DATE, b.fechaCobro) = CONVERT(DATE, GETDATE());
                     """
 
             # Obtener datos del recolector para ese dia
@@ -240,7 +241,7 @@ def get_manager_collectors(jwt_payload):
             # TODO cambiar mensaje a JSON
             return "No hay informacion de los recolectores para el dia de hoy"
         
-        return resultado
+        return jsonify(resultado)
         
     except Exception as e:
         return {'Error al obtener los datos del recolector para el dia de hoy'}, 400

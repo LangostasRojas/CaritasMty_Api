@@ -1,5 +1,4 @@
 from flask import make_response, request, Blueprint
-import sys
 
 from app import app, CNX
 from app.auth import controllers

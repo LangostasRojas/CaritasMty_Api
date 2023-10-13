@@ -3,9 +3,11 @@ import sys
 
 from app import app, CNX
 from app.manager import controllers
+from app.manager import controllers_kpis
 from app.middleware.middleware import exclude_middleware
 
 controllers.cnx = CNX
+controllers_kpis.cnx = CNX
 
 manager_bp = Blueprint('manager', __name__)
 
@@ -73,5 +75,55 @@ def get_manager_ticket_information():
     ticket_id = request.args.get('ticketId')
 
     response = controllers.get_manager_ticket_information(ticket_id, request.userJWT)
+
+    return make_response(response)
+
+
+# Ayuda a generar reporte de los tickets de ese dia
+# Regresa - idRecibo, idDonante, importe, estatusPago (bool), comentario
+@app.route("/get-report-information", methods=['GET'])
+def get_report_information():
+    response = controllers_kpis.get_report_information(request.userJWT)
+
+    return make_response(response)
+
+# Ver donaciones por municipio en todo el tiempo
+# Regresa - municipio, ingresos
+@app.route("/get-zone-donations", methods=['GET'])
+def get_zone_donations():
+    response = controllers_kpis.get_zone_donations(request.userJWT)
+
+    return make_response(response)
+
+# Ver tickets recolectados en todo el tiempo
+# Regresa - total, recolectado, porcentaje
+@app.route("/get-completion-rate", methods=['GET'])
+def get_completion_rate():
+    response = controllers_kpis.get_completion_rate(request.userJWT)
+
+    return make_response(response)
+
+
+# Promedio de tickets en los ultimos 7 dias
+# Regresa - total, recolectado, porcentaje, fecha
+@app.route("/get-average-tickets", methods=['GET'])
+def get_average_tickets():
+    response = controllers_kpis.get_average_tickets(request.userJWT)
+
+    return make_response(response)
+
+
+# Ver donaciones esperadas para el dia de hoy
+# Regresa donacionesEsperadas
+@app.route("/get-expected-donations", methods=['GET'])
+def get_expected_donations():
+    response = controllers_kpis.get_expected_donations(request.userJWT)
+
+    return make_response(response)
+
+
+@app.route("/get-completion-rate-by-collector", methods=['GET'])
+def get_completion_rate_by_collector():
+    response = controllers_kpis.get_completion_rate_by_collector(request.userJWT)
 
     return make_response(response)

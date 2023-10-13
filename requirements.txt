@@ -4,3 +4,5 @@ pyjwt
 pymssql
 bcrypt
 requests
+secure
+gunicorn

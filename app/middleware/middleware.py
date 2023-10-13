@@ -1,7 +1,7 @@
 from flask import request, make_response, g, Blueprint
+# from gunicorn.http import wsgi
 import jwt
 import time
-import sys
 
 from app import app, CNX, ACCESS_TOKEN_KEY
 from app.middleware import controllers
@@ -9,6 +9,12 @@ from app.middleware import controllers
 controllers.cnx = CNX
 
 middleware_bp = Blueprint('middleware', __name__)
+
+# class Response(wsgi.Response):
+#     def default_headers(self, *args, **kwargs):
+#         headers = super(Response, self).default_headers(*args, **kwargs)
+#         return [h for h in headers if not h.startswith('Server:')]
+# wsgi.Response = Response
 
 # Excluir middleware
 def exclude_middleware(func):
@@ -64,3 +70,15 @@ def verify_jwt():
         return {'error': 'Token de acceso invalido'}, 401
     except Exception as e:
         return {'error': "Error al verificar token de acceso"}, 401
+    
+
+# @app.after_request
+# def add_headers(r):
+#     import secure
+#     secure_headers = secure.Secure()
+#     secure_headers.flask(r)
+#     r.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+#     r.headers['Content-Security-Policy'] = "default-src 'none'"
+#     r.headers['Shakira'] = "rocks!"
+
+#     return r

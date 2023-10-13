@@ -19,6 +19,9 @@ pip install python-dotenv
 pip install pyjwt
 pip install pymssql
 pip install bcrypt
+pip install requests
+pip install secure
+pip install gunicorn
 ```
 
 
@@ -38,7 +41,7 @@ GOOGLE_MAPS_API_KEY=GOOGLE_MAPS_API_KEY
 Para iniciar la API, ejecuta el siguiente comando:
 
 ```bash
-python api_mssql.py
+python run.py
 ```
 
 ## Documentación API

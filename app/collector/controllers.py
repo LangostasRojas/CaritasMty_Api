@@ -1,3 +1,4 @@
+from flask import jsonify
 from app.config.mssql import mssql_connect
 import pymssql
 import requests
@@ -33,7 +34,7 @@ def get_collector_tickets(user_id, jwt_payload):
 
         result = cursor.fetchall()
         cursor.close()
-        return result
+        return jsonify(result)
 
     except Exception as e:
         return {'error': 'Ocurrio un error al obtener tickets de recolector'}
@@ -71,7 +72,7 @@ def get_ticket_information(ticket_id, jwt_payload):
         if result[0]['idRecolector'] != jwt_payload['userId']:
             return {'error': 'Acceso no autorizado'}, 401
         
-        return result[0]
+        return jsonify(result[0])
         
     except Exception as e:
         return {'Error al obtener datos de ticket'}, 401
@@ -325,7 +326,7 @@ def list_comments():
         
         result = cursor.fetchall()
         cursor.close()
-        return result
+        return jsonify(result)
         
     except Exception as e:
         return {'Error al obtener la lista de comentarios'}, 400
@@ -336,7 +337,7 @@ def get_ticket_geolocation(ticket_id, jwt_payload):
         global cnx, mssql_params
 
         query = """
-                SELECT b.idRecolector, d.direccion AS direccion
+                SELECT b.idRecolector, d.direccion + ',' + d.municipio AS direccion
                 FROM BITACORA b
                 JOIN DONANTES d ON b.idDonante = d.idDonante
                 WHERE b.idBitacora = %s;
@@ -362,12 +363,9 @@ def get_ticket_geolocation(ticket_id, jwt_payload):
         if result[0]['idRecolector'] != jwt_payload['userId']:
             return {'error': 'Acceso no autorizado'}, 401
         
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36'}
-        location = requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address=Av.%20Eugenio%20Garza%20Sada%202501%20Sur,%20Tecnol%C3%B3gico&key={GOOGLE_MAPS_API_KEY}", headers=headers)
-
-        print(f"https://maps.googleapis.com/maps/api/geocode/json?address=Av.%20Eugenio%20Garza%20Sada%202501%20Sur,%20Tecnol%C3%B3gico&key={GOOGLE_MAPS_API_KEY}")
-
-        return location.json()
+        response = requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={result[0]['direccion']}&key={GOOGLE_MAPS_API_KEY}")
+        
+        return jsonify(response.json()['results'][0]['geometry']['location'])
         
     except Exception as e:
         return {'Error al obtener la lista de comentarios'}, 400
