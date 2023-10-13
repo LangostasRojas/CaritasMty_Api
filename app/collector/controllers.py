@@ -337,7 +337,7 @@ def get_ticket_geolocation(ticket_id, jwt_payload):
         global cnx, mssql_params
 
         query = """
-                SELECT b.idRecolector, d.direccion + ',' + d.municipio AS direccion
+                SELECT d.direccion + ',' + d.municipio AS direccion
                 FROM BITACORA b
                 JOIN DONANTES d ON b.idDonante = d.idDonante
                 WHERE b.idBitacora = %s;
@@ -359,9 +359,6 @@ def get_ticket_geolocation(ticket_id, jwt_payload):
         # Verificar si el ticket existe
         if len(result) == 0:
             return {'error': 'Ticket no encontrado'}, 404
-        # Verificar que el recolector sea dueño del ticket
-        if result[0]['idRecolector'] != jwt_payload['userId']:
-            return {'error': 'Acceso no autorizado'}, 401
         
         response = requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={result[0]['direccion']}&key={GOOGLE_MAPS_API_KEY}")
         
