@@ -266,7 +266,7 @@ def get_collected_tickets_c_month(jwt_payload):
         result = cursor.fetchall()
         cursor.close()
         
-        return jsonify(result)
+        return jsonify(result[0])
         
     except Exception as e:
         return {'Error al obtener datos de ticket'}, 401
@@ -276,10 +276,14 @@ def get_collected_tickets_month(jwt_payload):
     global cnx, mssql_params
     query = """
             SET LANGUAGE SPANISH;
-            SELECT COUNT(*) AS total, DATENAME(MONTH, fechaCobro) AS mes, 
-                (SELECT COUNT(*) FROM BITACORA WHERE estatusPago = 1 GROUP BY DATENAME(MONTH, fechaCobro)) AS           recolectado
-            FROM BITACORA
-            GROUP BY DATENAME(MONTH, fechaCobro);
+            SELECT COUNT(*) AS total, b2.recolectado, DATENAME(MONTH, fechaCobro) AS mes
+            FROM BITACORA b
+            JOIN (
+                SELECT COUNT(*) AS recolectado, DATENAME(MONTH, fechaCobro) AS mes
+                FROM BITACORA WHERE estatusPago = 1 
+                GROUP BY DATENAME(MONTH, fechaCobro)
+            ) b2 ON DATENAME(MONTH, b.fechaCobro) = b2.mes
+            GROUP BY DATENAME(MONTH, fechaCobro), b2.recolectado;
             """
     try:
         if jwt_payload['role'] != 'manager':
