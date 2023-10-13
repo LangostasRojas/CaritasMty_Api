@@ -365,7 +365,7 @@ def get_ticket_geolocation(ticket_id, jwt_payload):
         
         response = requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={result[0]['direccion']}&key={GOOGLE_MAPS_API_KEY}")
         
-        return jsonify(response.json()['results'][0]['geometry']['location'])
+        return response.json()['results'][0]['geometry']['location']
         
     except Exception as e:
         return {'Error al obtener la lista de comentarios'}, 400

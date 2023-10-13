@@ -191,10 +191,11 @@ def get_manager_collectors(jwt_payload):
         def get_collector_information(collector_id):
             global cnx, mssql_params
             query = """
-                    SELECT b.idBitacora AS idTicket, b.importe, d.nombre + ' ' + d.apellidoPaterno nombre, d.direccion + ', ' + CONVERT(VARCHAR, d.codigoPostal) + ', ' + d.municipio AS direccion, b.estatusVisita AS estatus, b.estatusPago AS estatusPago
+                    SELECT b.idBitacora AS idTicket, b.importe, d.nombre + ' ' + d.apellidoPaterno nombre, d.direccion + ', ' + CONVERT(VARCHAR, d.codigoPostal) + ', ' + d.municipio AS direccion, b.estatusVisita AS estatus, b.estatusPago AS estatusPago, ISNULL(c.comentario, '') AS comentario
                     FROM USUARIOS u
                     JOIN BITACORA b ON u.idUsuario = b.idRecolector
                     JOIN DONANTES d ON b.idDonante = d.idDonante
+                    LEFT JOIN COMENTARIOS c ON b.comentarios = c.idComentario
                     WHERE b.idRecolector = %s AND CONVERT(DATE, b.fechaCobro) = CONVERT(DATE, GETDATE());
                     """
 
