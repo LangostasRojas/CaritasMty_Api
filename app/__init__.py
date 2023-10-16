@@ -1,4 +1,5 @@
 from flask import Flask, make_response, request, g
+from flask_wtf.csrf import CSRFProtect
 import sys
 from app.config.mssql import mssql_connect
 from dotenv import load_dotenv
@@ -15,6 +16,7 @@ mssql_params['DB_PASSWORD'] = os.getenv('DB_PASSWORD')
 ACCESS_TOKEN_KEY = os.getenv('ACCESS_TOKEN_KEY')
 REFRESH_TOKEN_KEY = os.getenv('REFRESH_TOKEN_KEY')
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 try:
     CNX = mssql_connect(mssql_params)
@@ -24,6 +26,8 @@ except Exception as e:
 
 # Start Flask app
 app = Flask(__name__)
+csrf = CSRFProtect()
+csrf.init_app(app)
 
 # Import blueprints
 from app.auth.routes import auth_bp
@@ -35,3 +39,8 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(middleware_bp)
 app.register_blueprint(collector_bp)
 app.register_blueprint(manager_bp)
+
+
+# Añadir CSRF token a todas las respuestas
+app.secret_key = SECRET_KEY
+app.config['WTF_CSRF_TIME_LIMIT'] = 600 # Expiracion de 10 minutos

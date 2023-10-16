@@ -1,4 +1,5 @@
-from flask import request, make_response, g, Blueprint
+from flask import request, make_response, g, Blueprint, jsonify
+from flask_wtf.csrf import generate_csrf
 # from gunicorn.http import wsgi
 import jwt
 import time
@@ -82,3 +83,12 @@ def verify_jwt():
 #     r.headers['Shakira'] = "rocks!"
 
 #     return r
+
+# @app.before_request
+# def apply_csrf_to_get_requests():
+#     csrf.protect()
+
+@exclude_middleware
+@app.route("/get-csrf-token", methods=['GET'])
+def get_csrf_token():
+    return make_response(jsonify(generate_csrf()))

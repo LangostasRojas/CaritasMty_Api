@@ -3,7 +3,8 @@ import sys
 
 from app import app, CNX
 from app.collector import controllers
-from app. middleware.middleware import  exclude_middleware
+from app. middleware.middleware import exclude_middleware
+from app.helpers.check_requests import check_parameters
 
 controllers.cnx = CNX
 
@@ -16,7 +17,7 @@ collector_bp = Blueprint('collector', __name__)
 # @app.route("/get-collector-tickets", methods=['GET'])
 def get_recolector_tickets():
     # Checar que se proporciono el id del recolector
-    if 'userId' not in request.args:
+    if check_parameters(request.args.keys(), ['userId']):
         return make_response({'error': 'Bad request'}, 400)
     
     user_id = request.args.get('userId')
@@ -31,7 +32,7 @@ def get_recolector_tickets():
 @app.route("/get-ticket-information", methods=['GET'])
 def get_ticket_information():
     # Checar que se proporciono el id del ticket
-    if 'ticketId' not in request.args:
+    if check_parameters(request.args.keys(), ['ticketId']):
         return make_response({'error': 'Bad request'}, 400)
 
     ticket_id = request.args.get('ticketId')
@@ -49,7 +50,7 @@ def complete_ticket():
     req = request.json
 
     # Checar que se proporciono el id del ticket y estatus (0: pendiente, 1: recolectado, 2: no recolectado)
-    if 'ticketId' not in req or 'estatus' not in req:
+    if check_parameters(req.keys(), ['ticketId', 'estatus']):
         return make_response({'error': 'Bad request'}, 400)
 
     ticket_id = req['ticketId']
@@ -68,7 +69,7 @@ def mark_visit():
     req = request.json
 
     # Checar que se proporciono el id del ticket y estatus (0: pendiente, 1: en camino, 2: visitado)
-    if 'ticketId' not in req or 'estatus' not in req:
+    if check_parameters(req.keys(), ['ticketId', 'estatus']):
         return make_response({'error': 'Bad request'}, 400)
 
     ticket_id = req['ticketId']
@@ -85,7 +86,8 @@ def set_comment():
     # Set comment to a ticket
     req = request.json
 
-    if 'ticketId' not in req or 'comment' not in req:
+    # Checar que se proporciono el id del ticket y el comentario
+    if check_parameters(req.keys(), ['ticketId', 'comment']):
         return make_response({'error': 'Bad request'}, 400)
     
     response = controllers.set_comment(req['ticketId'], req['comment'], request.userJWT)
@@ -98,6 +100,9 @@ def set_comment():
 @exclude_middleware
 @app.route("/get-list-comments", methods=['GET'])
 def list_comments():
+    if check_parameters(request.args.keys(), {}):
+        return make_response({'error': 'Bad request'}, 400)
+
     response = controllers.list_comments()
 
     return make_response(response)
@@ -108,7 +113,7 @@ def list_comments():
 @app.route("/get-geolocation", methods=['GET'])
 def get_ticket_geolocation():
     # Checar que se proporciono el id del ticket
-    if 'ticketId' not in request.args:
+    if check_parameters(request.args.keys(), ['ticketId']):
         return make_response({'error': 'Bad request'}, 400)
 
     ticket_id = request.args.get('ticketId')

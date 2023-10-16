@@ -251,8 +251,10 @@ def get_manager_collectors(jwt_payload):
 def change_ticket_collector(ticket_id, new_collector_id, jwt_payload):
     try:
         # Verify that ticket_id is an INT
-        try: ticket_id = int(ticket_id)
-        except Exception as e: return {'error': 'Ticket no valido'}, 406
+        try: 
+            ticket_id = int(ticket_id)
+            new_collector_id = int(new_collector_id)
+        except Exception as e: return {'error': 'Campos no validos'}, 406
 
         def get_manager_id(collector_id):
             global cnx, mssql_params

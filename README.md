@@ -22,6 +22,7 @@ pip install bcrypt
 pip install requests
 pip install secure
 pip install gunicorn
+pip install flask-wtf
 ```
 
 
@@ -34,6 +35,7 @@ DB_PASSWORD=DB_PASSWORD
 ACCESS_TOKEN_KEY=ACCESS_TOKEN_KEY
 REFRESH_TOKEN_KEY=REFRESH_TOKEN_KEY
 GOOGLE_MAPS_API_KEY=GOOGLE_MAPS_API_KEY
+SECRET_KEY=SECRET_KEY
 ```
 
 ## Ejecución

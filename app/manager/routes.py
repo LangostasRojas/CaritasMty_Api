@@ -5,6 +5,7 @@ from app import app, CNX
 from app.manager import controllers
 from app.manager import controllers_kpis
 from app.middleware.middleware import exclude_middleware
+from app.helpers.check_requests import check_parameters
 
 controllers.cnx = CNX
 controllers_kpis.cnx = CNX
@@ -15,6 +16,10 @@ manager_bp = Blueprint('manager', __name__)
 # Rgresa (lista) - nombre y idRecolector (pertenecen al manager)
 @app.route("/get-list-collectors", methods=['GET'])
 def get_list_collectors():
+    # Checar los argumentos
+    if check_parameters(request.args.keys(), []):
+        return make_response({'error': 'Bad request'}, 400)
+    
     # Return list of collectors
     response = controllers.get_list_collectors(request.userJWT)
 
@@ -26,7 +31,7 @@ def get_list_collectors():
 @app.route("/get-collector-daily-information", methods=['GET'])
 def get_collector_daily_information():
     # Check if collectorId is provided in request
-    if 'collectorId' not in request.args:
+    if check_parameters(request.args.keys(), ['collectorId']):
         return make_response({'error': 'Bad request'}, 400)
 
     collector_id = request.args.get('collectorId')
@@ -41,6 +46,10 @@ def get_collector_daily_information():
 # Regresa (lista 2D) - idRecolector, idTicket, importe, nombre, estatus (estatusVisita)
 @app.route("/get-manager-collectors", methods=['GET'])
 def get_manager_collectors():
+    # Checar los argumentos
+    if check_parameters(request.args.keys(), []):
+        return make_response({'error': 'Bad request'}, 400)
+
     # Return list of collectors and their tickets: 
     #  (Collectors have to be related to a manager)
     response = controllers.get_manager_collectors(request.userJWT)
@@ -55,7 +64,7 @@ def change_ticket_collector():
     # Checar que se proporciono el id del ticket
     req = request.json
 
-    if 'ticketId' not in req or 'collectorId' not in req:
+    if check_parameters(req.keys(), ['ticketId', 'collectorId']):
         return make_response({'error': 'Bad request'}, 400)
     
     response = controllers.change_ticket_collector(req['ticketId'], req['collectorId'], request.userJWT)
@@ -69,7 +78,7 @@ def change_ticket_collector():
 @app.route("/get-manager-ticket-information", methods=['GET'])
 def get_manager_ticket_information():
     # Check if ticketId is provided in request
-    if 'ticketId' not in request.args:
+    if check_parameters(request.args.keys(), ['ticketId']):
         return make_response({'error': 'Bad request'}, 400)
 
     ticket_id = request.args.get('ticketId')
@@ -83,6 +92,10 @@ def get_manager_ticket_information():
 # Regresa - idRecibo, idDonante, importe, estatusPago (bool), comentario
 @app.route("/get-report-information", methods=['GET'])
 def get_report_information():
+    # Checar los argumentos
+    if check_parameters(request.args.keys(), []):
+        return make_response({'error': 'Bad request'}, 400)
+
     response = controllers_kpis.get_report_information(request.userJWT)
 
     return make_response(response)
@@ -91,6 +104,10 @@ def get_report_information():
 # Regresa - municipio, ingresos
 @app.route("/get-zone-donations", methods=['GET'])
 def get_zone_donations():
+    # Checar los argumentos
+    if check_parameters(request.args.keys(), []):
+        return make_response({'error': 'Bad request'}, 400)
+    
     response = controllers_kpis.get_zone_donations(request.userJWT)
 
     return make_response(response)
@@ -99,6 +116,10 @@ def get_zone_donations():
 # Regresa - total, recolectado, porcentaje
 @app.route("/get-completion-rate", methods=['GET'])
 def get_completion_rate():
+    # Checar los argumentos
+    if check_parameters(request.args.keys(), []):
+        return make_response({'error': 'Bad request'}, 400)
+    
     response = controllers_kpis.get_completion_rate(request.userJWT)
 
     return make_response(response)
@@ -108,6 +129,10 @@ def get_completion_rate():
 # Regresa - total, recolectado, porcentaje, fecha
 @app.route("/get-average-tickets", methods=['GET'])
 def get_average_tickets():
+    # Checar los argumentos
+    if check_parameters(request.args.keys(), []):
+        return make_response({'error': 'Bad request'}, 400)
+    
     response = controllers_kpis.get_average_tickets(request.userJWT)
 
     return make_response(response)
@@ -117,6 +142,10 @@ def get_average_tickets():
 # Regresa donacionesEsperadas
 @app.route("/get-expected-donations", methods=['GET'])
 def get_expected_donations():
+    # Checar los argumentos
+    if check_parameters(request.args.keys(), []):
+        return make_response({'error': 'Bad request'}, 400)
+    
     response = controllers_kpis.get_expected_donations(request.userJWT)
 
     return make_response(response)
@@ -124,6 +153,10 @@ def get_expected_donations():
 
 @app.route("/get-completion-rate-by-collector", methods=['GET'])
 def get_completion_rate_by_collector():
+    # Checar los argumentos
+    if check_parameters(request.args.keys(), []):
+        return make_response({'error': 'Bad request'}, 400)
+    
     response = controllers_kpis.get_completion_rate_by_collector(request.userJWT)
 
     return make_response(response)
@@ -131,6 +164,10 @@ def get_completion_rate_by_collector():
 
 @app.route("/get-collected-tickets-current-month", methods=['GET'])
 def get_collected_tickets_c_month():
+    # Checar los argumentos
+    if check_parameters(request.args.keys(), []):
+        return make_response({'error': 'Bad request'}, 400)
+    
     response = controllers_kpis.get_collected_tickets_c_month(request.userJWT)
 
     return make_response(response)
@@ -138,6 +175,10 @@ def get_collected_tickets_c_month():
 
 @app.route("/get-collected-tickets-month", methods=['GET'])
 def get_collected_tickets_month():
+    # Checar los argumentos
+    if check_parameters(request.args.keys(), []):
+        return make_response({'error': 'Bad request'}, 400)
+    
     response = controllers_kpis.get_collected_tickets_month(request.userJWT)
 
     return make_response(response)

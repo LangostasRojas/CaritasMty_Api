@@ -6,3 +6,4 @@ bcrypt
 requests
 secure
 gunicorn
+flask-wtf
