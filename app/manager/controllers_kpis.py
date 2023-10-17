@@ -100,7 +100,8 @@ def get_completion_rate(jwt_payload):
         if (len(result) == 0):
             return {'mensaje': 'No hay datos que mostrar'}, 200
         
-        result[0]['porcentaje'] = int(result[0]['recolectado'] / result[0]['total'] * 100)
+        if result[0]['recolectado'] == 0: result[0]['porcentaje'] = 0
+        else: result[0]['porcentaje'] = int(result[0]['recolectado'] / result[0]['total'] * 100)
         
         return jsonify(result[0])
         
@@ -143,12 +144,18 @@ def get_zone_donations(jwt_payload):
 def get_average_tickets(jwt_payload):
     global cnx, mssql_params
     query = """ 
+            SET LANGUAGE SPANISH;
             SELECT ROW_NUMBER() OVER (ORDER BY CONVERT(DATE, fechaCobro)) AS id, COUNT(*) AS total, 
-                    (SELECT COUNT(*) FROM BITACORA WHERE estatusPago = 1) AS recolectado,
-                    CONVERT(DATE, fechaCobro) as fecha
-            FROM BITACORA
+            	   ISNULL(b2.recolectado, 0) AS recolectado, DATENAME(dw, fechaCobro) as fecha
+            FROM BITACORA b
+            LEFT JOIN (
+            	SELECT COUNT(*) AS recolectado, CONVERT(DATE, fechaCobro) AS fecha
+            	FROM BITACORA
+            	WHERE estatusPago = 1
+            	GROUP BY CONVERT(DATE, fechaCobro)
+            ) b2 ON CONVERT(DATE, b.fechaCobro) = b2.fecha
             WHERE fechaCobro >= CONVERT(DATE, GETDATE() - 7)
-            GROUP BY CONVERT(DATE, fechaCobro);
+            GROUP BY DATENAME(dw, fechaCobro), b2.recolectado, CONVERT(DATE, fechaCobro);
             """
     try:
         if jwt_payload['role'] != 'manager':
@@ -169,7 +176,8 @@ def get_average_tickets(jwt_payload):
             return {'mensaje': 'No hay datos que mostrar'}, 200
 
         for res in result:
-            res['porcentaje'] = int(res['recolectado'] / res['total'] * 100)
+            if res['recolectado'] == 0: res['porcentaje'] = 0
+            else: res['porcentaje'] = int(res['recolectado'] / res['total'] * 100)
         
         return jsonify(result)
         
