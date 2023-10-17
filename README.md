@@ -5,7 +5,7 @@ Esta es una API construida con Flask que se conecta a una base de datos SQL Serv
 ## Requisitos
 
 - Python 3.x
-- Paquetes Python: Flask, python-dotenv, pyjwt, pymssql, bcrypt
+- Paquetes Python: Flask, python-dotenv, pyjwt, pymssql, bcrypt, requests
 
 ## Configuración
 
@@ -19,6 +19,10 @@ pip install python-dotenv
 pip install pyjwt
 pip install pymssql
 pip install bcrypt
+pip install requests
+pip install secure
+pip install gunicorn
+pip install flask-wtf
 ```
 
 
@@ -30,6 +34,8 @@ DB_USER=DB_USER
 DB_PASSWORD=DB_PASSWORD
 ACCESS_TOKEN_KEY=ACCESS_TOKEN_KEY
 REFRESH_TOKEN_KEY=REFRESH_TOKEN_KEY
+GOOGLE_MAPS_API_KEY=GOOGLE_MAPS_API_KEY
+SECRET_KEY=SECRET_KEY
 ```
 
 ## Ejecución
@@ -37,8 +43,11 @@ REFRESH_TOKEN_KEY=REFRESH_TOKEN_KEY
 Para iniciar la API, ejecuta el siguiente comando:
 
 ```bash
-python api_mssql.py
+python run.py
 ```
+
+## Documentación API
+https://documenter.getpostman.com/view/29623799/2s9YC1WEFB
 
 ## Equipo 2 - Langostas
 

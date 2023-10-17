@@ -3,3 +3,7 @@ python-dotenv
 pyjwt
 pymssql
 bcrypt
+requests
+secure
+gunicorn
+flask-wtf
