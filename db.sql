@@ -95,15 +95,15 @@ GO
 -- Inserts para la tabla DONANTES
 INSERT INTO DONANTES (nombre, apellidoPaterno, apellidoMaterno, email, direccion, municipio, codigoPostal, telCasa, telMovil, genero)
 VALUES 
-('Roberto', 'Gomez', 'Lopez', 'roberto@gmail.com', 'Av. Eugenio Garza Sada 2501 Sur, Tecnológico', 'Monterrey', 64849, 123456789, 987654321, 'M'),
-('Laura', 'Rodriguez', 'Gonzalez', 'laura@gmail.com', 'Dinamarca 451, Del Carmen', 'Monterrey', 64710 , NULL, 789456123, 'F'),
-('Javier', 'Martinez', 'Perez', 'javier@gmail.com', 'Puerto Topolobampo 4603, Colinia Valle de, Las Brisas', 'Monterrey', 64790, 456123789, NULL, 'M'),
-('María', 'Hernandez', 'Gomez', 'maria@gmail.com', 'Carretera Nacional km 267.7 Colonia, La Estanzuela', 'Monterrey', 64986, 987654321, NULL, 'F'),
-('Carlos', 'Lopez', 'Gutierrez', 'carlos@gmail.com', 'Lince 1000, Cumbres Elite, Sector Villas', 'Monterrey', 64349, NULL, 321654987, 'M'),
-('Alejandra', 'Sanchez', 'Martinez', 'alejandra.sanchez@gmail.com', 'Av. Dr. Ignacio Morones Prieto 290, Sin Nombre de Col 11', 'Santa Catarina', 66180, 123456789, 987654321, 'F'),
-('Eduardo', 'Lopez', 'Gonzalez', 'eduardo.lopez@gmail.com', 'Av. Pablo Livas 2011, La Pastora', 'Guadalupe', 67140, NULL, 789456123, 'M'),
-('Isabel', 'Garcia', 'Hernandez', 'isabel.garcia@gmail.com', 'Niños Héroes, Ciudad Universitaria', 'San Nicolás de los Garza', 66451, 456123789, NULL, 'F'),
-('Diego', 'Fernandez', 'Ramirez', 'diego.fernandez@gmail.com', 'Av Eloy Cavazos, Jardines de La Pastora', 'Guadalupe', 67140, NULL, 321654987, 'M');
+('Roberto', 'Gómez', 'López', 'roberto@gmail.com', 'Av. Eugenio Garza Sada 2501 Sur, Tecnológico', 'Monterrey', 64849, 123456789, 987654321, 'M'),
+('Laura', 'Rodríguez', 'González', 'laura@gmail.com', 'Dinamarca 451, Del Carmen', 'Monterrey', 64710 , NULL, 789456123, 'F'),
+('Javier', 'Martínez', 'Pérez', 'javier@gmail.com', 'Puerto Topolobampo 4603, Colonia Valle de Las Brisas', 'Monterrey', 64790, 456123789, NULL, 'M'),
+('María', 'Hernández', 'Gómez', 'maria@gmail.com', 'Carretera Nacional km 267.7 Colonia La Estanzuela', 'Monterrey', 64986, 987654321, NULL, 'F'),
+('Carlos', 'López', 'Gutiérrez', 'carlos@gmail.com', 'Lince 1000, Cumbres Elite, Sector Villas', 'Monterrey', 64349, NULL, 321654987, 'M'),
+('Alejandra', 'Sánchez', 'Martínez', 'alejandra.sanchez@gmail.com', 'Av. Dr. Ignacio Morones Prieto 290, Sin Nombre de Col 11', 'Santa Catarina', 66180, 123456789, 987654321, 'F'),
+('Eduardo', 'López', 'González', 'eduardo.lopez@gmail.com', 'Av. Pablo Livas 2011, La Pastora', 'Guadalupe', 67140, NULL, 789456123, 'M'),
+('Isabel', 'García', 'Hernández', 'isabel.garcia@gmail.com', 'Niños Héroes, Ciudad Universitaria', 'San Nicolás', 66451, 456123789, NULL, 'F'),
+('Diego', 'Fernández', 'Ramírez', 'diego.fernandez@gmail.com', 'Av Eloy Cavazos, Jardines de La Pastora', 'Guadalupe', 67140, NULL, 321654987, 'M');
 GO
 
 -- Inserts para la tabla BITACORA
@@ -147,12 +147,11 @@ GO
 
 INSERT INTO COMENTARIOS (comentario)
 VALUES
-('comentario 1'),
-('comentario 2'),
-('comentario 3'),
-('comentario 4'),
-('comentario 5'),
-('comentario 6');
+('No se encontraba en casa'),
+('Ya no vive ahí'),
+('No desea continuar ayudando'),
+('Indispuesto'),
+('No se ubicó el domicilio'),
 GO
 
 
