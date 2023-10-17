@@ -175,3 +175,25 @@ BEGIN
 END;
 GO
 ALTER TABLE DONANTES ENABLE TRIGGER NoActualizarNombres;
+
+
+-- Crear usuario
+USE master
+GO
+CREATE LOGIN Langostas WITH PASSWORD = '$YbZB5ZwPZlfbiLB1tW4'; -- Se ejecuta en master
+GO
+
+-- Ejectuar en master
+CREATE USER Langostas FOR LOGIN Langostas;
+GO
+
+-- Ejecutar en db
+USE Caritas
+CREATE USER Langostas FOR LOGIN Langostas WITH DEFAULT_SCHEMA = dbo;
+GO
+
+-- Dar Permisos
+USE Caritas;
+GO
+GRANT SELECT, UPDATE, INSERT ON SCHEMA::dbo TO Langostas
+GO
