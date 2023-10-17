@@ -1,5 +1,5 @@
 from flask import request, make_response, g, Blueprint, jsonify
-from flask_wtf.csrf import generate_csrf
+# from flask_wtf.csrf import generate_csrf
 import jwt
 import time
 
@@ -81,7 +81,7 @@ def add_header(r):
 # def apply_csrf_to_get_requests():
 #     csrf.protect()
 
-@exclude_middleware
-@app.route("/get-csrf-token", methods=['GET'])
-def get_csrf_token():
-    return make_response(jsonify(generate_csrf()))
+# @exclude_middleware
+# @app.route("/get-csrf-token", methods=['GET'])
+# def get_csrf_token():
+#     return make_response(jsonify(generate_csrf()))

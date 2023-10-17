@@ -1,5 +1,5 @@
 from flask import Flask, make_response, request, g
-from flask_wtf.csrf import CSRFProtect
+# from flask_wtf.csrf import CSRFProtect
 import sys
 from app.config.mssql import mssql_connect
 from dotenv import load_dotenv
