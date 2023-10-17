@@ -2,7 +2,7 @@ from flask import jsonify
 from app.config.mssql import mssql_connect
 import pymssql
 import requests
-from app import GOOGLE_MAPS_API_KEY
+from app import GOOGLE_MAPS_API_KEY, TIMEOUT
 
 def get_collector_tickets(user_id, jwt_payload):
     global cnx, mssql_params
@@ -362,7 +362,10 @@ def get_ticket_geolocation(ticket_id, jwt_payload):
         if len(result) == 0:
             return {'error': 'Ticket no encontrado'}, 404
         
-        response = requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?address={result[0]['direccion']}&key={GOOGLE_MAPS_API_KEY}")
+        response = requests.get(
+            f"https://maps.googleapis.com/maps/api/geocode/json?address={result[0]['direccion']}&key={GOOGLE_MAPS_API_KEY}", 
+            timeout=TIMEOUT
+        )
         
         return response.json()['results'][0]['geometry']['location']
         

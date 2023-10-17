@@ -17,6 +17,7 @@ ACCESS_TOKEN_KEY = os.getenv('ACCESS_TOKEN_KEY')
 REFRESH_TOKEN_KEY = os.getenv('REFRESH_TOKEN_KEY')
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 SECRET_KEY = os.getenv('SECRET_KEY')
+TIMEOUT = 10 # Timeout for requests to external APIs
 
 try:
     CNX = mssql_connect(mssql_params)
@@ -26,8 +27,8 @@ except Exception as e:
 
 # Start Flask app
 app = Flask(__name__)
-csrf = CSRFProtect()
-csrf.init_app(app)
+# csrf = CSRFProtect()
+# csrf.init_app(app)
 
 # Import blueprints
 from app.auth.routes import auth_bp
