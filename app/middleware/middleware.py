@@ -1,6 +1,5 @@
 from flask import request, make_response, g, Blueprint, jsonify
 from flask_wtf.csrf import generate_csrf
-# from gunicorn.http import wsgi
 import jwt
 import time
 
@@ -10,12 +9,6 @@ from app.middleware import controllers
 controllers.cnx = CNX
 
 middleware_bp = Blueprint('middleware', __name__)
-
-# class Response(wsgi.Response):
-#     def default_headers(self, *args, **kwargs):
-#         headers = super(Response, self).default_headers(*args, **kwargs)
-#         return [h for h in headers if not h.startswith('Server:')]
-# wsgi.Response = Response
 
 # Excluir middleware
 def exclude_middleware(func):
@@ -73,16 +66,16 @@ def verify_jwt():
         return {'error': "Error al verificar token de acceso"}, 401
     
 
-# @app.after_request
-# def add_headers(r):
-#     import secure
-#     secure_headers = secure.Secure()
-#     secure_headers.flask(r)
-#     r.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-#     r.headers['Content-Security-Policy'] = "default-src 'none'"
-#     r.headers['Shakira'] = "rocks!"
-
-#     return r
+@app.after_request
+def add_header(r):
+    import secure
+    secure_headers = secure.Secure()
+    secure_headers.framework.flask(r)
+    #r.headers['X-Frame-Options'] = 'SAMEORIGIN' # ya lo llena 'secure'
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Content-Security-Policy"] = "default-src 'none'"
+    r.headers['X-Content-Type-Options'] = "nosniff"
+    return r
 
 # @app.before_request
 # def apply_csrf_to_get_requests():

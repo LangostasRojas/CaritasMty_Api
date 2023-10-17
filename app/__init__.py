@@ -25,6 +25,15 @@ except Exception as e:
     print("Cannot connect to mssql server!: {}".format(e))
     sys.exit()
 
+# Remove 'Server' from header
+from gunicorn.http import wsgi
+class Response(wsgi.Response):
+    def default_headers(self, *args, **kwargs):
+        headers = super(Response, self).default_headers(*args, **kwargs)
+        return [h for h in headers if not h.startswith('Server:')]
+wsgi.Response = Response
+
+
 # Start Flask app
 app = Flask(__name__)
 # csrf = CSRFProtect()
