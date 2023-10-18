@@ -284,7 +284,8 @@ def get_collected_tickets_month(jwt_payload):
     global cnx, mssql_params
     query = """
             SET LANGUAGE SPANISH;
-            SELECT COUNT(*) AS total, b2.recolectado, DATENAME(MONTH, fechaCobro) AS mes
+            SELECT ROW_NUMBER() OVER (ORDER BY DATENAME(MONTH, fechaCobro), b2.recolectado) AS id, 
+                   COUNT(*) AS total, b2.recolectado, DATENAME(MONTH, fechaCobro) AS mes
             FROM BITACORA b
             JOIN (
                 SELECT COUNT(*) AS recolectado, DATENAME(MONTH, fechaCobro) AS mes
